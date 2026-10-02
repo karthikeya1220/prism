@@ -3,6 +3,9 @@
 > Living plan. Update as milestones complete. Source of truth for requirements:
 > `SDE Intern Frontend Development Assignment.md`. Rules: `CLAUDE.md` / `AGENTS.md`.
 > Repo is greenfield — everything starts at M1.
+>
+> **Status (2026-10-02):** M1 ✅ · M2 ✅ (types, store, slices, persistence) ·
+> M3 ✅ (route handlers, normalizers, RTK Query, unit tests) · M4–M13 pending.
 
 ---
 
