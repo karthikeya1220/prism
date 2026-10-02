@@ -6,16 +6,19 @@ import type { SocialItem } from '@/types'
 import CardImage from './CardImage'
 import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass } from './cardStyles'
+import { Highlight } from '@/components/ui/Highlight'
 import { timeAgo } from '@/lib/format'
 
 export interface SocialCardProps {
   item: SocialItem
   isFavorite: boolean
   onToggleFavorite: (item: SocialItem) => void
+  /** Search term to highlight in description ('' = none, M7). */
+  highlight?: string
 }
 
 /** Social variant of the content card: author + engagement counts. */
-export function SocialCard({ item, isFavorite, onToggleFavorite }: SocialCardProps) {
+export function SocialCard({ item, isFavorite, onToggleFavorite, highlight = '' }: SocialCardProps) {
   const reduce = useReducedMotion()
   const initials = item.author.displayName
     .split(/\s+/)
@@ -44,7 +47,9 @@ export function SocialCard({ item, isFavorite, onToggleFavorite }: SocialCardPro
             <span className="font-normal text-ink-soft">@{item.author.handle}</span>
           </p>
         </div>
-        <p className={cardTextClass}>{item.description}</p>
+        <p className={cardTextClass}>
+          <Highlight text={item.description} term={highlight} />
+        </p>
         <p className={cardMetaClass}>
           #{item.hashtag} · {timeAgo(item.publishedAt)}
         </p>

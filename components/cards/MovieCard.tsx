@@ -6,16 +6,19 @@ import type { MovieItem } from '@/types'
 import CardImage from './CardImage'
 import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass, cardTitleClass } from './cardStyles'
+import { Highlight } from '@/components/ui/Highlight'
 import { formatRating, releaseYear } from '@/lib/format'
 
 export interface MovieCardProps {
   item: MovieItem
   isFavorite: boolean
   onToggleFavorite: (item: MovieItem) => void
+  /** Search term to highlight in title/description ('' = none, M7). */
+  highlight?: string
 }
 
 /** Movie variant of the content card: rating badge + "Play Now" CTA. */
-export function MovieCard({ item, isFavorite, onToggleFavorite }: MovieCardProps) {
+export function MovieCard({ item, isFavorite, onToggleFavorite, highlight = '' }: MovieCardProps) {
   const reduce = useReducedMotion()
   return (
     <motion.article
@@ -33,8 +36,14 @@ export function MovieCard({ item, isFavorite, onToggleFavorite }: MovieCardProps
           {releaseYear(item.releaseDate) || 'Upcoming'}
           {item.genres.length > 0 && ` · ${item.genres.slice(0, 2).join(', ')}`}
         </p>
-        <h3 className={cardTitleClass}>{item.title}</h3>
-        {item.description && <p className={cardTextClass}>{item.description}</p>}
+        <h3 className={cardTitleClass}>
+          <Highlight text={item.title} term={highlight} />
+        </h3>
+        {item.description && (
+          <p className={cardTextClass}>
+            <Highlight text={item.description} term={highlight} />
+          </p>
+        )}
         <div className="mt-auto flex items-center justify-between pt-2">
           <a
             href={item.url}

@@ -68,7 +68,7 @@ function trendingPage<T extends ContentItem>(
 
 async function trendingNews(categories: Category[], requested: number): Promise<ContentPage<NewsItem>> {
   const result = await fetchNews({ categories, page: 1, pageSize: PER_TYPE }).catch(
-    () => buildMockNewsPage(categories, 1, PER_TYPE),
+    () => buildMockNewsPage(categories, 1, '', PER_TYPE),
   )
   const items = [...result.items]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))

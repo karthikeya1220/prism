@@ -25,6 +25,37 @@ export interface TrendingArgs {
   category?: string
 }
 
+/** One source's slice of a cross-type search (M7): items + server-side total. */
+export interface SearchSourceSlice<T extends ContentItem> {
+  items: T[]
+  /** Upstream total for this source; falls back to the page size. */
+  totalResults: number
+  /** True when this source failed — the other sources still render. */
+  failed: boolean
+}
+
+/** Grouped result of one search across all three content sources. */
+export interface SearchBundle {
+  news: SearchSourceSlice<NewsItem>
+  movies: SearchSourceSlice<MovieItem>
+  social: SearchSourceSlice<SocialItem>
+}
+
+function emptySlice<T extends ContentItem>(): SearchSourceSlice<T> {
+  return { items: [], totalResults: 0, failed: false }
+}
+
+function sliceOf<T extends ContentItem>(result: PageResult<T>): SearchSourceSlice<T> {
+  if ('data' in result) {
+    return {
+      items: result.data.items,
+      totalResults: result.data.totalResults,
+      failed: false,
+    }
+  }
+  return { items: [], totalResults: 0, failed: true }
+}
+
 type PageResult<T extends ContentItem> =
   | { data: ContentPage<T> }
   | { error: FetchBaseQueryError }
@@ -113,27 +144,36 @@ export const contentApi = createApi({
       providesTags: ['Content'],
     }),
 
-    /** Cross-type search; round-robins news/movies/social results by rank. */
-    search: builder.query<ContentItem[], { q: string }>({
+    /**
+     * Cross-type search (M7): fires news/movies/social in parallel on one
+     * shared abort signal and returns grouped per-source slices. Each `q`
+     * gets its own cache entry, and RTK Query aborts superseded requests —
+     * fast typing can never render an older query's results.
+     */
+    search: builder.query<SearchBundle, { q: string }>({
       queryFn: async ({ q }, { signal }) => {
-        if (!q.trim()) return { data: [] }
-        const paths = ['news', 'movies', 'social'] as const
-        const results = await Promise.all(
-          paths.map((path) => fetchPage<ContentItem>(path, { q, page: 1 }, signal)),
-        )
-        const pages = results.map((r) => ('data' in r ? r.data.items : []))
-        const merged: ContentItem[] = []
-        for (let rank = 0; ; rank++) {
-          let added = false
-          for (const items of pages) {
-            if (rank < items.length) {
-              merged.push(items[rank])
-              added = true
-            }
+        const trimmed = q.trim()
+        if (!trimmed) {
+          return {
+            data: {
+              news: emptySlice<NewsItem>(),
+              movies: emptySlice<MovieItem>(),
+              social: emptySlice<SocialItem>(),
+            },
           }
-          if (!added) break
         }
-        return { data: merged }
+        const [news, movies, social] = await Promise.all([
+          fetchPage<NewsItem>('news', { q: trimmed, page: 1 }, signal),
+          fetchPage<MovieItem>('movies', { q: trimmed, page: 1 }, signal),
+          fetchPage<SocialItem>('social', { q: trimmed, page: 1 }, signal),
+        ])
+        return {
+          data: {
+            news: sliceOf(news),
+            movies: sliceOf(movies),
+            social: sliceOf(social),
+          },
+        }
       },
       providesTags: ['Content'],
     }),

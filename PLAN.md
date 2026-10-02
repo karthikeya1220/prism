@@ -9,7 +9,8 @@
 > M4 ✅ (app shell, dark mode, transitions, a11y) ·
 > M5 ✅ (feed, trending tabs, favorites, settings, onboarding) ·
 > M6 ✅ (settings wiring + feed refetch — delivered inside M5) ·
-> M7–M13 pending (M9 partly: trending + favorites sections done; transitions
+> M7 ✅ (debounced cross-type search, /search page, grouped results) ·
+> M8–M13 pending (M9 partly: trending + favorites sections done; transitions
 > and final a11y pass remain).
 
 ---
@@ -384,6 +385,26 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
 - **M7 — Search.** `useDebouncedValue`, search wiring to `q` params, results
   section across types; tests.
   *AC:* one request per 300 ms pause while typing; results show all types. `feat:`
+  *Done:* generic `useDebounce` hook (400 ms default; fake-timer unit tests for
+  default/override/rapid-typing clock resets). Header SearchBar syncs the
+  trimmed query to `/search?q=` via `router.replace` (no back-button spam)
+  only when ≥ 2 chars, flushes on Enter, clears on Escape, `/` focuses,
+  `role="search"` + described-by hint; wrapped in Suspense for prerender.
+  `/search` page reads `q` (Suspense-wrapped `SearchView`); `SearchResults`
+  renders grouped News/Movies/Social sections with counts + type filter tabs,
+  `<mark>`-highlighted matches (Highlight component threaded through
+  ContentGrid + all three cards), skeletons, per-source error banner with
+  retry (one failed source never blanks the others), and a no-results state
+  with suggestion links. RTK Query `search` endpoint rewritten: parallel
+  news/movies/social fetches on one abort signal returning a `SearchBundle`
+  (items + totals + failed flags); superseded queries are aborted so fast
+  typing can never render stale results (proven by a held-response test).
+  Also fixed: `/api/news` now honors `q` (local filter after NewsAPI
+  top-headlines, truthful totals) with the cache key including `q`, and the
+  mock news fallback filters by `q`. Debounce is 400 ms per task spec (PLAN
+  said 300 ms; the mechanism is identical). Verified: `lint`, `typecheck`,
+  115 unit/integration tests (SearchBar 11, search integration 7,
+  useDebounce 4).
 - **M8 — Drag & drop.** dnd-kit sortable feed, KeyboardSensor, `feedOrder`
   persistence, `aria-live` announcements, `prefers-reduced-motion` disables animations.
   *AC:* reorder by mouse **and keyboard**, persists after reload; tests. `feat:`

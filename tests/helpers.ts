@@ -1,5 +1,5 @@
 /**
- * Shared fixtures + MSW handler factories for integration tests (M5).
+ * Shared fixtures + MSW handler factories for integration tests (M5+).
  * Kept out of `*.test.*` so Vitest does not collect it as a suite.
  */
 import { http, HttpResponse } from 'msw'
@@ -127,6 +127,33 @@ export function feedHandlers(captured: string[]) {
     http.get('*/api/social', ({ request }) => {
       captured.push(request.url)
       return HttpResponse.json(page([socialFixture('social:one', 'A fresh dev thread')]))
+    }),
+  ]
+}
+
+/**
+ * Search endpoint handlers (M7): echo the `q` param into fixture titles so
+ * grouped results, highlighting, and no-results states are observable.
+ */
+export function searchHandlers(captured: string[]) {
+  return [
+    http.get('*/api/news', ({ request }) => {
+      captured.push(request.url)
+      const q = new URL(request.url).searchParams.get('q') ?? ''
+      if (!q) return HttpResponse.json(page([]))
+      return HttpResponse.json(page([newsFixture(`news:q-${q}`, `News hit for ${q}`)]))
+    }),
+    http.get('*/api/movies', ({ request }) => {
+      captured.push(request.url)
+      const q = new URL(request.url).searchParams.get('q') ?? ''
+      if (!q) return HttpResponse.json(page([]))
+      return HttpResponse.json(page([movieFixture(`movie:q-${q}`, `Movie hit for ${q}`)]))
+    }),
+    http.get('*/api/social', ({ request }) => {
+      captured.push(request.url)
+      const q = new URL(request.url).searchParams.get('q') ?? ''
+      if (!q) return HttpResponse.json(page([]))
+      return HttpResponse.json(page([socialFixture(`social:q-${q}`, `Social hit for ${q}`)]))
     }),
   ]
 }

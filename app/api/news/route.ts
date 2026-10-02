@@ -17,18 +17,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const params = request.nextUrl.searchParams
     const categories = parseCategories(params.get('category'))
     const page = parsePage(params.get('page'))
-    parseQuery(params.get('q')) // validated for length; news handler is headline-only
+    const q = parseQuery(params.get('q'))
 
-    const key = cacheKey('news', { categories, page })
+    const key = cacheKey('news', { categories, page, q })
     const cached = getCache<ContentPage<NewsItem>>(key)
     if (cached) return jsonPage(cached)
 
     try {
-      const result = await fetchNews({ categories, page, pageSize: PAGE_SIZE })
+      const result = await fetchNews({ categories, page, pageSize: PAGE_SIZE, query: q })
       setCache(key, result, 10 * 60_000)
       return jsonPage(result)
     } catch {
-      return jsonPage(pageFromCacheOrMock(key, () => buildMockNewsPage(categories, page, PAGE_SIZE)))
+      return jsonPage(
+        pageFromCacheOrMock(key, () => buildMockNewsPage(categories, page, q, PAGE_SIZE)),
+      )
     }
   })
 }

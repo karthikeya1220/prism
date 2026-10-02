@@ -30,15 +30,17 @@ interface NewsApiTopHeadlinesResponse {
 }
 
 /**
- * Fetch one page of top headlines for the given categories and normalize to a
- * ContentPage<NewsItem>. Throws UpstreamError on any failure.
+ * Fetch one page of headlines for the given categories, optionally filtered by
+ * a free-text query, and normalize to a ContentPage<NewsItem>. Throws
+ * UpstreamError on any failure.
  */
 export async function fetchNews(options: {
   categories: string[]
   page: number
   pageSize: number
+  query?: string
 }): Promise<ContentPage<NewsItem>> {
-  const { categories, page, pageSize } = options
+  const { categories, page, pageSize, query } = options
   const key = process.env.NEWS_API_KEY
   if (!key) throw new UpstreamError('NEWS_API_KEY is not configured')
 
@@ -63,14 +65,17 @@ export async function fetchNews(options: {
     throw new UpstreamError('NewsAPI returned an unexpected payload')
   }
 
-  const items: NewsItem[] = data.articles.flatMap((article) => {
+  // NewsAPI top-headlines has no `q` param; filter locally (title/description/
+  // author), then paginate the filtered list so totalResults stays truthful.
+  const needle = query?.trim().toLowerCase() ?? ''
+  const all = data.articles.flatMap((article) => {
     const title = article.title?.trim()
     const url = article.url?.trim()
     if (!title || !url) return [] // skip upstream junk rows
     return [
       {
         id: hashId('news', url),
-        type: 'news',
+        type: 'news' as const,
         title,
         description: article.description?.trim() || '',
         imageUrl: article.urlToImage?.trim() || null,
@@ -82,13 +87,23 @@ export async function fetchNews(options: {
       },
     ]
   })
+  const filtered = needle
+    ? all.filter(
+        (item) =>
+          item.title.toLowerCase().includes(needle) ||
+          item.description.toLowerCase().includes(needle) ||
+          (item.author?.toLowerCase().includes(needle) ?? false),
+      )
+    : all
+  const start = (page - 1) * pageSize
+  const items = filtered.slice(start, start + pageSize)
 
   return {
     items,
     page,
     pageSize,
-    totalResults: data.totalResults ?? items.length,
-    hasMore: page * pageSize < (data.totalResults ?? 0),
+    totalResults: filtered.length,
+    hasMore: start + items.length < filtered.length,
     source: 'live',
   }
 }

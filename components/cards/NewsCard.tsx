@@ -6,16 +6,19 @@ import type { NewsItem } from '@/types'
 import CardImage from './CardImage'
 import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass, cardTitleClass } from './cardStyles'
+import { Highlight } from '@/components/ui/Highlight'
 import { timeAgo } from '@/lib/format'
 
 export interface NewsCardProps {
   item: NewsItem
   isFavorite: boolean
   onToggleFavorite: (item: NewsItem) => void
+  /** Search term to highlight in title/description ('' = none, M7). */
+  highlight?: string
 }
 
 /** News variant of the content card: source/category meta + "Read More". */
-export function NewsCard({ item, isFavorite, onToggleFavorite }: NewsCardProps) {
+export function NewsCard({ item, isFavorite, onToggleFavorite, highlight = '' }: NewsCardProps) {
   const reduce = useReducedMotion()
   return (
     <motion.article
@@ -28,8 +31,14 @@ export function NewsCard({ item, isFavorite, onToggleFavorite }: NewsCardProps) 
         <p className={cardMetaClass}>
           {item.source} · {item.category} · {timeAgo(item.publishedAt)}
         </p>
-        <h3 className={cardTitleClass}>{item.title}</h3>
-        {item.description && <p className={cardTextClass}>{item.description}</p>}
+        <h3 className={cardTitleClass}>
+          <Highlight text={item.title} term={highlight} />
+        </h3>
+        {item.description && (
+          <p className={cardTextClass}>
+            <Highlight text={item.description} term={highlight} />
+          </p>
+        )}
         <div className="mt-auto flex items-center justify-between pt-2">
           <a
             href={item.url}

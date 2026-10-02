@@ -76,7 +76,7 @@ describe('news normalizer (NewsAPI → NewsItem)', () => {
 
     const page = await fetchNews({ categories: ['technology'], page: 1, pageSize: 12 })
     expect(page.source).toBe('live')
-    expect(page.totalResults).toBe(3)
+    expect(page.totalResults).toBe(2) // truthful count after junk rows are dropped
     expect(page.items).toHaveLength(2) // junk dropped
 
     const first = page.items[0] as NewsItem
@@ -193,11 +193,11 @@ describe('social API (mock dataset)', () => {
   })
 
   it('builds deterministic mock fallback pages for news and movies', () => {
-    const newsPage: ContentPage<NewsItem> = buildMockNewsPage(['finance'], 1, 12)
+    const newsPage: ContentPage<NewsItem> = buildMockNewsPage(['finance'], 1, '', 12)
     expect(newsPage.source).toBe('mock')
     expect(newsPage.items.every((i) => i.category === 'finance')).toBe(true)
 
-    const generalNews = buildMockNewsPage(['general'], 1, 12)
+    const generalNews = buildMockNewsPage(['general'], 1, '', 12)
     expect(generalNews.items.length).toBeGreaterThan(0)
 
     const moviesPage = buildMockMoviesPage(['general'], 1, '', 12)
