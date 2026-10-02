@@ -60,3 +60,13 @@ export function parseQuery(value: string | null): string {
   }
   return q
 }
+
+/** Content slice requested from /api/trending; 'all' merges every type. */
+export type TrendingType = 'all' | 'news' | 'movie' | 'social'
+
+/** Parse the `type` param for /api/trending. Defaults to 'all'; unknown → 400. */
+export function parseTrendingType(value: string | null): TrendingType {
+  if (value === null || value.trim() === '' || value === 'all') return 'all'
+  if (value === 'news' || value === 'movie' || value === 'social') return value
+  throw new ValidationError(`Unknown type: ${value}`)
+}

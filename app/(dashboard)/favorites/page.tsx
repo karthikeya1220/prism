@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { Heart } from 'lucide-react'
-import EmptyState from '@/components/ui/EmptyState'
+import FavoritesView from '@/features/favorites/FavoritesView'
 
 export const metadata: Metadata = { title: 'Favorites — Prism' }
 
-/** Favorites page (M4 shell): the saved-items section lands in M9. */
+/** Favorites: everything you kept, grouped by type with an undoable remove (R8). */
 export default function FavoritesPage() {
   return (
     <div className="space-y-8">
@@ -14,20 +13,7 @@ export default function FavoritesPage() {
           Everything you kept, saved on this device and ready to revisit.
         </p>
       </header>
-      <section
-        id="favorites"
-        aria-labelledby="favorites-heading"
-        className="scroll-mt-24 space-y-4"
-      >
-        <h2 id="favorites-heading" className="text-title font-semibold text-ink">
-          Saved items
-        </h2>
-        <EmptyState
-          icon={<Heart size={20} aria-hidden="true" />}
-          title="No favorites yet"
-          hint="Tap the heart on any card to keep it here — favorites stay put even when you are offline."
-        />
-      </section>
+      <FavoritesView />
     </div>
   )
 }

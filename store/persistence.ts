@@ -12,7 +12,10 @@
  */
 import { createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit'
 import {
+  DEFAULT_CATEGORIES,
   hydratePreferences,
+  markOnboarded,
+  resetPreferences,
   setDarkMode,
   setLanguage,
   toggleCategory,
@@ -73,12 +76,15 @@ function sanitizePreferences(value: unknown): PreferencesState | null {
   if (!value || typeof value !== 'object') return null
   const v = value as Partial<PreferencesState>
   if (!Array.isArray(v.categories)) return null
+  const categories = v.categories.filter(
+    (c): c is Category => typeof c === 'string' && isCategory(c),
+  )
   return {
-    categories: v.categories.filter(
-      (c): c is Category => typeof c === 'string' && isCategory(c),
-    ),
+    // The feed needs a topic: fall back when the payload ends up empty.
+    categories: categories.length > 0 ? categories : [...DEFAULT_CATEGORIES],
     darkMode: typeof v.darkMode === 'boolean' ? v.darkMode : false,
     language: v.language === 'de' ? 'de' : 'en',
+    onboarded: v.onboarded === true,
   }
 }
 
@@ -179,6 +185,8 @@ export function createPersistenceMiddleware() {
       toggleCategory,
       setDarkMode,
       setLanguage,
+      markOnboarded,
+      resetPreferences,
       addFavorite,
       removeFavorite,
       toggleFavorite,

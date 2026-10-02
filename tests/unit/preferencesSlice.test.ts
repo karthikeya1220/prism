@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import reducer, {
   hydratePreferences,
+  markOnboarded,
   MAX_CATEGORIES,
+  resetPreferences,
   setDarkMode,
   setLanguage,
   toggleCategory,
@@ -50,8 +52,40 @@ describe('preferencesSlice', () => {
   })
 
   it('rehydrates wholesale and tolerates empty categories', () => {
-    const persisted = { categories: [], darkMode: true, language: 'en' as const }
+    const persisted = {
+      categories: [],
+      darkMode: true,
+      language: 'en' as const,
+      onboarded: false,
+    }
     const state = reducer(initial, hydratePreferences(persisted))
     expect(state).toEqual(persisted)
+  })
+
+  it('never empties the category list', () => {
+    const single = reducer(
+      { ...initial, categories: ['technology'] },
+      toggleCategory('technology'),
+    )
+    expect(single.categories).toEqual(['technology'])
+  })
+
+  it('marks onboarding complete without touching topics', () => {
+    const state = reducer(initial, markOnboarded())
+    expect(state.onboarded).toBe(true)
+    expect(state.categories).toEqual(initial.categories)
+  })
+
+  it('resets preferences to defaults but keeps the onboarding flag', () => {
+    let state = reducer(initial, setDarkMode(true))
+    state = reducer(state, setLanguage('de'))
+    state = reducer(state, toggleCategory('sports'))
+    state = reducer(state, markOnboarded())
+
+    state = reducer(state, resetPreferences())
+    expect(state.categories).toEqual(['technology', 'entertainment'])
+    expect(state.darkMode).toBe(false)
+    expect(state.language).toBe('en')
+    expect(state.onboarded).toBe(true)
   })
 })

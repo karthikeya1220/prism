@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
-import { Newspaper } from 'lucide-react'
-import EmptyState from '@/components/ui/EmptyState'
+import FeedSection from '@/features/feed/FeedSection'
+import OnboardingDialog from '@/features/preferences/OnboardingDialog'
 
 export const metadata: Metadata = { title: 'Feed — Prism' }
 
-/** Feed page (M4 shell): the unified stream lands here in M5. */
+/** Personalized unified feed — the app's landing view (R6). */
 export default function FeedPage() {
   return (
     <div className="space-y-8">
@@ -22,12 +22,9 @@ export default function FeedPage() {
         <h2 id="feed-heading" className="text-title font-semibold text-ink">
           Latest for you
         </h2>
-        <EmptyState
-          icon={<Newspaper size={20} aria-hidden="true" />}
-          title="Your feed is warming up"
-          hint="Choose the topics you care about in Settings — stories, films, and posts will collect here."
-        />
+        <FeedSection />
       </section>
+      <OnboardingDialog />
     </div>
   )
 }

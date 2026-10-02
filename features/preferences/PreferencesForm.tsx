@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { MAX_CATEGORIES, toggleCategory } from '@/features/preferences/preferencesSlice'
 import { CATEGORIES, type Category } from '@/types'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -7,14 +8,26 @@ import { cx } from '@/lib/cx'
 
 /**
  * Feed-topic picker: toggle chips over every category, capped at
- * MAX_CATEGORIES. State lives in the preferences slice, so choices persist
- * through localStorage (store/persistence.ts) and will drive feed queries
- * from M5 on. The counter is polite-live so screen readers hear the cap.
+ * MAX_CATEGORIES and never empty — deselecting the final topic is refused
+ * with a clear (role="alert") message. State lives in the preferences slice,
+ * so choices persist through localStorage (store/persistence.ts) and drive
+ * feed queries (FeedSection passes them as RTK Query args). The counter is
+ * polite-live so screen readers hear the cap.
  */
 export function PreferencesForm() {
   const categories = useAppSelector((state) => state.preferences.categories)
   const dispatch = useAppDispatch()
+  const [blocked, setBlocked] = useState(false)
   const atCap = categories.length >= MAX_CATEGORIES
+
+  const onToggle = (category: Category) => {
+    if (categories.includes(category) && categories.length === 1) {
+      setBlocked(true)
+      return
+    }
+    setBlocked(false)
+    dispatch(toggleCategory(category))
+  }
 
   return (
     <div className="rounded-card border border-line bg-surface p-5 shadow-card">
@@ -35,7 +48,7 @@ export function PreferencesForm() {
               <button
                 type="button"
                 aria-pressed={selected}
-                onClick={() => dispatch(toggleCategory(category))}
+                onClick={() => onToggle(category)}
                 className={cx(
                   'rounded-control border px-3 py-1.5 text-sm capitalize transition-colors',
                   selected
@@ -49,10 +62,20 @@ export function PreferencesForm() {
           )
         })}
       </ul>
-      <p className="mt-3 text-xs text-ink-soft" aria-live="polite">
-        {atCap
-          ? 'Topic limit reached — clear one to swap it.'
-          : 'Saved automatically.'}
+      <p
+        role={blocked ? 'alert' : undefined}
+        aria-live={blocked ? undefined : 'polite'}
+        className="mt-3 text-xs"
+      >
+        {blocked ? (
+          <span className="text-rose-500">
+            Keep at least one topic selected — Prism always needs something to show you.
+          </span>
+        ) : (
+          <span className="text-ink-soft">
+            {atCap ? 'Topic limit reached — clear one to swap it.' : 'Saved automatically.'}
+          </span>
+        )}
       </p>
     </div>
   )

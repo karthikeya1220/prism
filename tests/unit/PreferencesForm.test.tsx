@@ -51,4 +51,27 @@ describe('PreferencesForm', () => {
     expect(screen.getByRole('button', { name: 'science' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByText('Topic limit reached — clear one to swap it.')).toBeInTheDocument()
   })
+
+  it('refuses to deselect the last topic and explains why', async () => {
+    const user = userEvent.setup()
+    render(
+      <Providers>
+        <PreferencesForm />
+      </Providers>,
+    )
+    // Defaults leave two topics; drop one so exactly one remains.
+    await user.click(screen.getByRole('button', { name: 'entertainment' }))
+    expect(screen.getByText(`1/${MAX_CATEGORIES}`)).toBeInTheDocument()
+
+    // Deselecting the final topic is blocked with a clear (alert) message.
+    await user.click(screen.getByRole('button', { name: 'technology' }))
+    expect(screen.getByRole('button', { name: 'technology' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent(/keep at least one topic/i)
+    expect(screen.getByText(`1/${MAX_CATEGORIES}`)).toBeInTheDocument()
+
+    // Selecting another topic clears the message and succeeds.
+    await user.click(screen.getByRole('button', { name: 'sports' }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByText(`2/${MAX_CATEGORIES}`)).toBeInTheDocument()
+  })
 })

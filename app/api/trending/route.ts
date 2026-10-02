@@ -1,26 +1,46 @@
 /**
- * GET /api/trending — top trending items across all content types (PLAN.md §5).
- * Movies come from TMDB trending (popularity), news from the latest headlines
- * (recency), social from the mock dataset (engagement). Falls back to mock
- * data per endpoint so the section always renders.
+ * GET /api/trending — trending content, optionally sliced by `type`
+ * (news | movie | social) and `category` (PLAN.md §5, M5).
+ *
+ * - `type=news`    → latest headlines, newest first.
+ * - `type=movie`   → TMDB weekly trending, popularity first.
+ * - `type=social`  → mock dataset sorted by engagement (likes + 2·reposts).
+ * - no `type`      → merged cross-type page scored per type (legacy 'all').
+ *
+ * Every slice falls back to mock fixtures when its upstream is unavailable,
+ * so the page always renders (`source` marks the degradation).
  */
 import type { NextRequest, NextResponse } from 'next/server'
-import type { ContentItem, ContentPage } from '@/types'
+import type { Category, ContentItem, ContentPage, ContentSource, MovieItem, NewsItem, SocialItem } from '@/types'
 import { fetchNews } from '@/lib/apis/news'
 import { fetchTrendingMovies } from '@/lib/apis/movies'
 import { fetchSocial } from '@/lib/apis/social'
 import { jsonPage, withErrors } from '@/lib/response'
-import { parsePage } from '@/lib/validate'
-import { MOCK_NEWS } from '@/mocks/news'
-import { MOCK_MOVIES } from '@/mocks/movies'
+import {
+  PAGE_SIZE,
+  parseCategories,
+  parsePage,
+  parseTrendingType,
+  type TrendingType,
+} from '@/lib/validate'
+import { buildMockNewsPage } from '@/mocks/newsPage'
+import { buildMockMoviesPage } from '@/mocks/moviesPage'
 
-/** Trending score per type: movies by popularity, social by engagement, news by recency. */
+/** Items per section — one full screen of trending content per type. */
+const PER_TYPE = PAGE_SIZE
+
+/** Engagement score for social posts (PLAN.md §5). */
+function engagement(post: SocialItem): number {
+  return post.likes + 2 * post.reposts
+}
+
+/** Trending score per type for the merged 'all' view. */
 function trendScore(item: ContentItem): number {
   switch (item.type) {
     case 'movie':
       return item.popularity
     case 'social':
-      return Math.log10(1 + item.likes + 2 * item.reposts) * 100
+      return engagement(item)
     case 'news': {
       const ageHours = Math.max(
         (Date.now() - new Date(item.publishedAt).getTime()) / 3_600_000,
@@ -31,34 +51,75 @@ function trendScore(item: ContentItem): number {
   }
 }
 
+/** Page envelope around an already-materialized trending list. */
+function trendingPage<T extends ContentItem>(
+  items: T[],
+  source: ContentSource,
+): ContentPage<T> {
+  return {
+    items,
+    page: 1,
+    pageSize: items.length,
+    totalResults: items.length,
+    hasMore: false,
+    source,
+  }
+}
+
+async function trendingNews(categories: Category[], requested: number): Promise<ContentPage<NewsItem>> {
+  const result = await fetchNews({ categories, page: 1, pageSize: PER_TYPE }).catch(
+    () => buildMockNewsPage(categories, 1, PER_TYPE),
+  )
+  const items = [...result.items]
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .slice(0, requested)
+  return trendingPage(items, result.source)
+}
+
+async function trendingMovies(categories: Category[], requested: number): Promise<ContentPage<MovieItem>> {
+  const result = await fetchTrendingMovies({ categories, page: 1, pageSize: PER_TYPE })
+    .catch(() => buildMockMoviesPage(categories, 1, '', PER_TYPE))
+  const wanted = categories.includes('general') ? null : categories
+  const items = result.items
+    .filter((movie) => !wanted || wanted.includes(movie.category))
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(0, requested)
+  return trendingPage(items, result.source)
+}
+
+function trendingSocial(categories: Category[], requested: number): ContentPage<SocialItem> {
+  const result = fetchSocial({ hashtags: [], page: 1, pageSize: 100 })
+  const wanted = categories.includes('general') ? null : categories
+  const items = result.items
+    .filter((post) => !wanted || wanted.includes(post.category))
+    .sort((a, b) => engagement(b) - engagement(a))
+    .slice(0, requested)
+  return trendingPage(items, result.source)
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   return withErrors(async () => {
-    parsePage(request.nextUrl.searchParams.get('page'))
+    const params = request.nextUrl.searchParams
+    const type: TrendingType = parseTrendingType(params.get('type'))
+    const categories = parseCategories(params.get('category'))
+    parsePage(params.get('page'))
 
+    if (type === 'news') return jsonPage(await trendingNews(categories, PER_TYPE))
+    if (type === 'movie') return jsonPage(await trendingMovies(categories, PER_TYPE))
+    if (type === 'social') return jsonPage(trendingSocial(categories, PER_TYPE))
+
+    // 'all' — merged cross-type page (back-compat with the M3 contract).
     const [movies, news, social] = await Promise.all([
-      fetchTrendingMovies({ categories: ['general'], page: 1, pageSize: 8 }).catch(
-        () => null,
-      ),
-      fetchNews({ categories: ['general'], page: 1, pageSize: 8 }).catch(() => null),
-      Promise.resolve(fetchSocial({ hashtags: [], page: 1, pageSize: 8 })),
+      trendingMovies(categories, 8),
+      trendingNews(categories, 8),
+      Promise.resolve(trendingSocial(categories, 8)),
     ])
 
-    const movieItems = movies?.items ?? MOCK_MOVIES.slice(0, 8)
-    const newsItems = news?.items ?? MOCK_NEWS.slice(0, 8)
-    const socialItems = social.items
-
-    const merged = [...movieItems, ...newsItems, ...socialItems].sort(
+    const merged = [...movies.items, ...news.items, ...social.items].sort(
       (a, b) => trendScore(b) - trendScore(a),
     )
-
-    const page: ContentPage<ContentItem> = {
-      items: merged,
-      page: 1,
-      pageSize: merged.length,
-      totalResults: merged.length,
-      hasMore: false,
-      source: movies && news ? 'live' : 'mock',
-    }
-    return jsonPage(page)
+    const source: ContentSource =
+      movies.source === 'live' && news.source === 'live' ? 'live' : 'mock'
+    return jsonPage(trendingPage(merged, source))
   })
 }

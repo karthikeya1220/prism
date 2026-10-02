@@ -124,4 +124,24 @@ describe('GET /api/trending', () => {
     const types = new Set(page.items.map((item) => item.type))
     expect(types.size).toBeGreaterThan(1)
   })
+
+  it('serves a single content type when type is specified', async () => {
+    const page = (await (
+      await getTrending(req('/api/trending?type=news'))
+    ).json()) as ContentPage<ContentItem>
+    expect(page.items.length).toBeGreaterThan(0)
+    expect(page.items.every((item) => item.type === 'news')).toBe(true)
+  })
+
+  it('filters a type by category', async () => {
+    const page = (await (
+      await getTrending(req('/api/trending?type=news&category=sports'))
+    ).json()) as ContentPage<ContentItem>
+    expect(page.items.length).toBeGreaterThan(0)
+    expect(page.items.every((item) => item.category === 'sports')).toBe(true)
+  })
+
+  it('rejects an unknown type with 400 BAD_REQUEST', async () => {
+    await expectBadRequest(await getTrending(req('/api/trending?type=podcast')))
+  })
 })

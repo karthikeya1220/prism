@@ -20,6 +20,19 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
     }) as MediaQueryList
 }
 
+// RTK Query's fetchBaseQuery constructs `new Request('/api/...')` with a
+// relative URL. Browsers resolve that against the document, but Node's undici
+// Request rejects it (ERR_INVALID_URL). Resolve string inputs against the
+// jsdom location so app code can keep using relative API paths.
+if (typeof window !== 'undefined' && typeof Request === 'function') {
+  const BaseRequest = Request
+  globalThis.Request = class RelativeRequest extends BaseRequest {
+    constructor(input: RequestInfo | URL, init?: RequestInit) {
+      super(typeof input === 'string' ? new URL(input, window.location.href).href : input, init)
+    }
+  } as typeof Request
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 
 afterEach(() => {

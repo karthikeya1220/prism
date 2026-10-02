@@ -19,6 +19,12 @@ export interface FeedArgs {
   page?: number
 }
 
+/** Slice requested from /api/trending; category narrows one section. */
+export interface TrendingArgs {
+  type?: 'news' | 'movie' | 'social' | 'all'
+  category?: string
+}
+
 type PageResult<T extends ContentItem> =
   | { data: ContentPage<T> }
   | { error: FetchBaseQueryError }
@@ -95,9 +101,15 @@ export const contentApi = createApi({
       infiniteScrollQuery<SocialItem>('social'),
     ),
 
-    /** Trending section: pre-scored mix across all types. */
-    getTrending: builder.query<ContentPage<ContentItem>, void>({
-      query: () => '/trending',
+    /** Trending section: pre-scored mix, optionally sliced by type + category. */
+    getTrending: builder.query<ContentPage<ContentItem>, TrendingArgs>({
+      query: (args) => {
+        const params = new URLSearchParams()
+        if (args?.type && args.type !== 'all') params.set('type', args.type)
+        if (args?.category) params.set('category', args.category)
+        const qs = params.toString()
+        return qs ? `/trending?${qs}` : '/trending'
+      },
       providesTags: ['Content'],
     }),
 

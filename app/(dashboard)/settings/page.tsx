@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
 import PreferencesForm from '@/features/preferences/PreferencesForm'
+import SettingsPanel from '@/features/preferences/SettingsPanel'
 
 export const metadata: Metadata = { title: 'Settings — Prism' }
 
-/** Settings page (M4 shell): topic preferences now, social/language next. */
+/**
+ * Settings: topic chips (persisted + feed refetch), appearance/language
+ * controls, and reset (M5). Every change saves immediately.
+ */
 export default function SettingsPage() {
   return (
     <div className="max-w-2xl space-y-8">
@@ -24,20 +28,13 @@ export default function SettingsPage() {
             Feed topics
           </h2>
           <p className="text-sm text-ink-soft">
-            These decide which stories, films, and posts reach your feed.
+            These decide which stories, films, and posts reach your feed — and
+            the feed refetches the moment you change them.
           </p>
         </div>
         <PreferencesForm />
       </section>
-      <section aria-labelledby="appearance-heading" className="space-y-1">
-        <h2 id="appearance-heading" className="text-title font-semibold text-ink">
-          Appearance
-        </h2>
-        <p className="text-sm text-ink-soft">
-          Use the sun/moon button in the header to switch themes — Prism follows
-          your system setting until you choose.
-        </p>
-      </section>
+      <SettingsPanel />
     </div>
   )
 }

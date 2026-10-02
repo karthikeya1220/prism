@@ -4,9 +4,13 @@
 > `SDE Intern Frontend Development Assignment.md`. Rules: `CLAUDE.md` / `AGENTS.md`.
 > Repo is greenfield — everything starts at M1.
 >
-> **Status (2026-10-02):** M1 ✅ · M2 ✅ (types, store, slices, persistence) ·
+> **Status (2026-10-03):** M1 ✅ · M2 ✅ (types, store, slices, persistence) ·
 > M3 ✅ (route handlers, normalizers, RTK Query, unit tests) ·
-> M4 ✅ (app shell, dark mode, transitions, a11y) · M5–M13 pending.
+> M4 ✅ (app shell, dark mode, transitions, a11y) ·
+> M5 ✅ (feed, trending tabs, favorites, settings, onboarding) ·
+> M6 ✅ (settings wiring + feed refetch — delivered inside M5) ·
+> M7–M13 pending (M9 partly: trending + favorites sections done; transitions
+> and final a11y pass remain).
 
 ---
 
@@ -358,9 +362,25 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
 - **M5 — Feed.** FeedSection + 3 card variants, skeletons/empty/error, favorite
   toggle, infinite scroll, subtle Framer Motion hovers; integration tests (MSW).
   *AC:* feed renders 3 item types; all three UI states provable in tests. `feat:`
+  *Done:* delivered together with M6 + the trending/favorites parts of M9 per the
+  assignment's milestone grouping: pure `buildFeed` (2:1:1 interleave, category
+  filter), IntersectionObserver infinite scroll, News/Movie/Social cards with
+  skeletons, empty and error+retry states, `/api/trending` extended with
+  `type`/`category` slices behind accessible tablist tabs (arrow-key roving),
+  Favorites page (type groups, filter chips, remove with undo toast), Settings
+  (min-one validated category chips, language, dark, reset — instant persist +
+  feed refetch), first-run onboarding dialog. Deviations: PLAN's `prefs.hashtags`
+  social filter stays at its default "all" (brief requires categories only; the
+  `/api/social?hashtag=` param exists for a later UI); trending scoring lives in
+  the route handler (mock fallbacks), not a client `trending.ts`. Verified:
+  `lint`, `typecheck`, 93 unit/integration tests, Playwright smoke incl.
+  onboarding dismiss.
 - **M6 — Preferences.** SettingsPanel + PreferencesForm wired to store; feed
   refetches on change; persistence verified.
   *AC:* changing prefs filters feed and survives reload; unit + integration tests. `feat:`
+  *Done (in M5):* chips shipped with M4; refetch proven by
+  `tests/integration/feedRefetch.test.tsx`, persistence by `preferencesSlice` +
+  `persistence` tests.
 - **M7 — Search.** `useDebouncedValue`, search wiring to `q` params, results
   section across types; tests.
   *AC:* one request per 300 ms pause while typing; results show all types. `feat:`
