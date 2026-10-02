@@ -1,26 +1,148 @@
 @import "tailwindcss";
 
+/*
+ * Prism design tokens (M4 — layout shell + theme).
+ *
+ * Light/dark palettes live as plain custom properties on :root / .dark;
+ * `@theme inline` exposes them to Tailwind as utilities (bg-canvas, text-ink,
+ * rounded-card, shadow-pop …). Utilities compile down to var(--canvas), so
+ * toggling the .dark class on <html> repaints every token-aware surface at
+ * once — components need almost no dark: variants.
+ *
+ * The spectrum gradient (--prism-spectrum) is the brand signature: it appears
+ * only on the logo tile and the active-navigation indicator, never as
+ * decoration.
+ */
+
+/* Class-based dark mode (Tailwind v4 syntax); the class is written by the
+   pre-paint script in app/layout.tsx and kept in sync by components/Providers.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+
+  /* Surfaces */
+  --canvas: #f3f5f9;
+  --surface: #ffffff;
+  --line: #e3e7f0;
+
+  /* Text */
+  --ink: #141926;
+  --ink-soft: #566078;
+
+  /* Interactive: accent = text/rings/icons, accent-solid = filled controls */
+  --accent: #4a4fe0;
+  --accent-solid: #4a4fe0;
+  --on-accent: #ffffff;
+
+  /* Fixed "instrument frame" sidebar — ink-dark in both themes */
+  --sidebar: #141826;
+  --sidebar-ink: #e7eaf4;
+  --sidebar-ink-soft: #9aa3bf;
+  --sidebar-line: rgb(255 255 255 / 0.09);
+  --sidebar-active: rgb(255 255 255 / 0.08);
+
+  /* Brand spectrum (coral → amber → mint → sky → violet) */
+  --prism-spectrum: linear-gradient(
+    180deg,
+    #ff6b6b 0%,
+    #ffb454 20%,
+    #ffe66d 38%,
+    #3ecf8e 58%,
+    #4cc9f0 78%,
+    #7b61ff 100%
+  );
+}
+
+.dark {
+  color-scheme: dark;
+
+  --canvas: #0f121b;
+  --surface: #171b27;
+  --line: #242a3a;
+
+  --ink: #e9ecf6;
+  --ink-soft: #9ba5bf;
+
+  --accent: #a3a7ff;
+  --accent-solid: #5a5de8;
+  --on-accent: #ffffff;
+
+  --sidebar: #0b0e16;
+  --sidebar-ink: #e7eaf4;
+  --sidebar-ink-soft: #8f97b3;
+  --sidebar-line: rgb(255 255 255 / 0.08);
+  --sidebar-active: rgb(255 255 255 / 0.07);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-accent: var(--accent);
+  --color-accent-solid: var(--accent-solid);
+  --color-on-accent: var(--on-accent);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-soft: var(--sidebar-ink-soft);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-sidebar-active: var(--sidebar-active);
+
+  /* Spacing-style radii: cards breathe, controls stay compact */
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+
+  /* Layered shadows — one lift for cards, one pop for floating layers */
+  --shadow-card: 0 1px 2px rgb(16 20 40 / 0.05), 0 10px 28px -16px rgb(16 20 40 / 0.18);
+  --shadow-pop: 0 2px 6px rgb(8 10 24 / 0.06), 0 24px 48px -24px rgb(8 10 24 / 0.35);
+
+  /* Type scale: display → title (page/section heads) — body uses text-base/sm */
+  --text-display: 1.75rem;
+  --text-display--line-height: 1.2;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.3;
+  --text-title--letter-spacing: -0.01em;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* One visible focus treatment for every interactive element (WCAG 2.4.7). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* Smooth in-page scrolling only when the user hasn't asked for less motion. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

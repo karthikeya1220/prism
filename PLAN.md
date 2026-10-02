@@ -5,7 +5,8 @@
 > Repo is greenfield — everything starts at M1.
 >
 > **Status (2026-10-02):** M1 ✅ · M2 ✅ (types, store, slices, persistence) ·
-> M3 ✅ (route handlers, normalizers, RTK Query, unit tests) · M4–M13 pending.
+> M3 ✅ (route handlers, normalizers, RTK Query, unit tests) ·
+> M4 ✅ (app shell, dark mode, transitions, a11y) · M5–M13 pending.
 
 ---
 
@@ -344,6 +345,16 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
 - **M4 — Layout shell + theme.** Sidebar, Header (SearchBar, ThemeToggle,
   AccountMenu), responsive grid, dark mode via CSS vars, FOUC script, focus rings.
   *AC:* theme persists across reload without flash; layout usable at 375 px & 1280 px. `feat:`
+  *Done:* §6's single `DashboardPage` became a `(dashboard)` route group — `/`,
+  `/trending`, `/favorites`, `/settings` — so active-route highlighting
+  (`aria-current="page"`) and AnimatePresence page transitions are real;
+  sidebar items are routes, not in-page anchors. Settings is a route (not the
+  planned slide-over) and ships the `PreferencesForm` category chips early
+  (M6 keeps feed-refetch-on-change + hashtags). SearchBar holds local state
+  until M7. Tailwind v4 expresses `darkMode: 'class'` as
+  `@custom-variant dark` in `globals.css`. Verified: 69 unit tests, 22
+  Playwright behavioral checks (no-flash reload, drawer focus trap, collapse,
+  skip link), screenshots at 375/1280 in both themes.
 - **M5 — Feed.** FeedSection + 3 card variants, skeletons/empty/error, favorite
   toggle, infinite scroll, subtle Framer Motion hovers; integration tests (MSW).
   *AC:* feed renders 3 item types; all three UI states provable in tests. `feat:`
