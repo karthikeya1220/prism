@@ -3,26 +3,39 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, UserRound } from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
 import { cx } from '@/lib/cx'
-
-/** Mock account shown until real auth lands (bonus milestone M11). */
-const ACCOUNT = { name: 'Jordan Lee', email: 'jordan@prism.app', initials: 'JL' }
 
 const menuItemClass =
   'flex w-full items-center justify-between gap-3 rounded-control px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-line/60'
 
+function initialsOf(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
 /**
- * Avatar button opening a placeholder account menu (profile/sign-out arrive
- * with auth). Fully keyboard-operable: Enter/Space or ArrowDown opens and
- * focuses the first item, ArrowUp/ArrowDown cycle, Escape closes and returns
- * focus to the button, and a outside pointer-down dismisses.
+ * Header account menu on the real NextAuth session: profile identity block,
+ * links to settings/profile, and sign-out (→ /login). Fully keyboard-operable:
+ * Enter/Space or ArrowDown opens and focuses the first item, ArrowUp/ArrowDown
+ * cycle, Escape closes and restores focus, outside pointer-down dismisses.
  */
 export function AccountMenu() {
+  const { data: session, status } = useSession()
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
+
+  const user = session?.user
+  const name = user?.name ?? 'Account'
+  const initials = user ? initialsOf(user.name ?? user.email ?? 'Account') || '?' : ''
+  const avatar = user?.avatar ?? null
 
   useEffect(() => {
     if (!open) return
@@ -69,15 +82,21 @@ export function AccountMenu() {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account menu for ${ACCOUNT.name}`}
+        aria-label={`Account menu for ${name}`}
         onClick={() => setOpen((v) => !v)}
         className="flex h-10 items-center gap-1 rounded-control px-1 transition-colors hover:bg-line/60"
       >
         <span
           aria-hidden="true"
-          className="grid h-8 w-8 place-items-center rounded-full bg-accent-solid text-xs font-semibold text-white"
+          className="grid h-8 w-8 place-items-center rounded-full bg-accent-solid text-sm text-white"
         >
-          {ACCOUNT.initials}
+          {status === 'loading' ? (
+            <UserRound size={15} />
+          ) : avatar ? (
+            avatar
+          ) : (
+            <span className="text-xs font-semibold">{initials}</span>
+          )}
         </span>
         <ChevronDown
           size={15}
@@ -100,8 +119,8 @@ export function AccountMenu() {
             className="absolute right-0 top-full z-50 mt-2 w-60 origin-top-right rounded-card border border-line bg-surface p-1.5 shadow-pop"
           >
             <div className="px-3 py-2.5">
-              <p className="truncate text-sm font-medium text-ink">{ACCOUNT.name}</p>
-              <p className="truncate text-xs text-ink-soft">{ACCOUNT.email}</p>
+              <p className="truncate text-sm font-medium text-ink">{name}</p>
+              <p className="truncate text-xs text-ink-soft">{user?.email ?? '…'}</p>
             </div>
             <hr className="my-1 border-line" />
             <Link
@@ -112,13 +131,21 @@ export function AccountMenu() {
             >
               Settings
             </Link>
-            <button type="button" role="menuitem" aria-disabled="true" className={cx(menuItemClass, 'text-ink-soft')}>
+            <Link
+              href="/profile"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className={menuItemClass}
+            >
               Profile
-              <span className="text-xs text-ink-soft">soon</span>
-            </button>
-            <button type="button" role="menuitem" aria-disabled="true" className={cx(menuItemClass, 'text-ink-soft')}>
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className={menuItemClass}
+            >
               Sign out
-              <span className="text-xs text-ink-soft">soon</span>
             </button>
           </motion.div>
         )}

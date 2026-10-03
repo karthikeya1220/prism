@@ -13,7 +13,7 @@
 > M8 ✅ (dnd-kit sortable feed — pointer/touch/keyboard, announcements,
 > layout slice persistence, Reset order) ·
 > M9–M13 pending (M9 partly: trending + favorites sections done; transitions
-> and final a11y pass remain).
+> and final a11y pass remain) · M11 ✅ (NextAuth v5 Credentials + profile page)
 
 ---
 
@@ -455,6 +455,16 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
   deferred — not needed for demo-grade mock auth).
   *AC:* login → personalized account info in header → logout resets; reload keeps
   session; unit + integration tests. `feat:`
+  *Done 2026-10-03 (supersedes the “no NextAuth” note — user requested it):*
+  NextAuth v5 Credentials provider (`auth.ts` split from `auth.config.ts`),
+  Next 16 `proxy.ts` route protection with `?callbackUrl=`, scrypt-hashed demo
+  user (`demo@prism.app`, creds in README) + `/api/auth/signup`,
+  `/api/profile` (name + avatar presets), profile page, real AccountMenu
+  session/sign-out, per-user storage scope `pcd:state:v1:<userId>` + device
+  `pcd:theme:v1` mirror, gated hydration on session resolve. Tests: unit
+  (validation, hashing, store, scoped persistence) + integration (login/signup/
+  profile/menu forms) + E2E `e2e/auth.spec.ts` (redirect, wrong password,
+  callbackUrl, logout, profile edit) — lint/typecheck/178 tests/7 E2E green.
 - **M12 — Realtime social feed (SSE).** `GET /api/social/stream` route handler
   streams a new mock `SocialItem` every ~20 s (respecting prefs); client hook
   feeds RTK Query `onCacheEntryAdded` to prepend items (dedupe by id); "live"

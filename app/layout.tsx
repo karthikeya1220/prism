@@ -23,14 +23,20 @@ export const metadata: Metadata = {
 /**
  * Pre-paint theme script (M4): applies the saved dark-mode preference — or
  * the OS preference on first visit — before the browser paints, so there is
- * no flash of the wrong theme. Mirrors the persistence payload written by
- * store/persistence.ts (key + version must match) and the sync logic in
- * components/Providers.tsx.
+ * no flash of the wrong theme. Reads the device-level `pcd:theme:v1` mirror
+ * first (works for signed-in accounts, whose payload lives under a scoped
+ * key the script cannot derive), then the legacy guest payload, then the OS.
+ * Mirrors store/persistence.ts (keys + version) and components/Providers.tsx.
  */
 const THEME_SCRIPT = `(function(){try{
-  var p=JSON.parse(localStorage.getItem('pcd:state:v1')||'null');
-  var saved=p&&p.version===1&&p.preferences&&typeof p.preferences.darkMode==='boolean'?p.preferences.darkMode:null;
-  var dark=saved===null?window.matchMedia('(prefers-color-scheme: dark)').matches:saved;
+  var dark=null;
+  var t=JSON.parse(localStorage.getItem('pcd:theme:v1')||'null');
+  if(t&&t.version===1&&typeof t.darkMode==='boolean')dark=t.darkMode;
+  if(dark===null){
+    var p=JSON.parse(localStorage.getItem('pcd:state:v1')||'null');
+    if(p&&p.version===1&&p.preferences&&typeof p.preferences.darkMode==='boolean')dark=p.preferences.darkMode;
+  }
+  if(dark===null)dark=window.matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.classList.toggle('dark',dark);
 }catch(e){}})()`;
 

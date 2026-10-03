@@ -2,11 +2,13 @@
  * Persistence for client-state slices (PLAN.md §3/§7):
  *
  * - A listener middleware whitelists preferences/favorites/layout and
- *   debounces writes to localStorage['pcd:state:v1'] (single versioned payload).
- * - `hydrateFromStorage` rehydrates *after mount* (called from Providers' effect),
- *   so server-rendered markup and the first client render both use slice
- *   defaults — no hydration mismatch. Theme flash is handled separately by the
- *   pre-hydration script (M4).
+ *   debounces writes to localStorage (single versioned payload per scope:
+ *   `pcd:state:v1` for guests, `pcd:state:v1:<userId>` per account — M11).
+ * - `hydrateFromStorage` rehydrates *after mount* (called from Providers'
+ *   effect once the session resolves), so server-rendered markup and the
+ *   first client render both use slice defaults — no hydration mismatch.
+ *   Theme flash is handled separately by the pre-hydration script (M4), fed
+ *   by the device-level THEME_KEY mirror.
  * - Every storage touch and payload parse is guarded: SSR, private-mode
  *   browsers, and corrupt/foreign payloads can never crash the app.
  */
@@ -41,8 +43,31 @@ import { isCategory, isContentItem, type Category, type ContentItem } from '@/ty
 import type { AppDispatch } from './index'
 
 export const STORAGE_KEY = 'pcd:state:v1'
+/** Device-level dark-mode mirror for the pre-paint script (any user scope). */
+export const THEME_KEY = 'pcd:theme:v1'
 const WRITE_DEBOUNCE_MS = 250
 const MAX_PERSISTED_IDS = 200
+
+/**
+ * Which account the reader/writer currently targets (PLAN.md M11):
+ * null → guest key `pcd:state:v1`, a user id → `pcd:state:v1:<id>`. Set by
+ * hydrateFromStorage when Providers learns the session.
+ */
+let scopeUserId: string | null = null
+
+export function setStorageScope(userId: string | null): void {
+  scopeUserId = userId
+}
+
+/** Storage key for a user scope (null/undefined → the legacy guest key). */
+export function storageKeyFor(userId?: string | null): string {
+  return userId ? `${STORAGE_KEY}:${userId}` : STORAGE_KEY
+}
+
+/** Current scope's storage key (guest key when signed out). */
+export function currentStorageKey(): string {
+  return storageKeyFor(scopeUserId)
+}
 
 /** Validated slice payloads recovered from storage (any slice may be absent). */
 export interface PersistedState {
@@ -66,11 +91,25 @@ function createWriter() {
       timer = null
       if (!latest) return
       try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: 1, ...latest }))
+        window.localStorage.setItem(currentStorageKey(), JSON.stringify({ version: 1, ...latest }))
+        mirrorTheme(latest.preferences?.darkMode)
       } catch {
         // Quota errors / private mode: persistence is best-effort by design.
       }
     }, WRITE_DEBOUNCE_MS)
+  }
+}
+
+/** Keep the device-level theme mirror in sync for the pre-paint script. */
+function mirrorTheme(darkMode: boolean | undefined): void {
+  if (typeof darkMode !== 'boolean') return
+  try {
+    window.localStorage.setItem(
+      THEME_KEY,
+      JSON.stringify({ version: 1, darkMode }),
+    )
+  } catch {
+    // Best-effort, like every other storage touch.
   }
 }
 
@@ -139,7 +178,7 @@ function sanitizeLayout(value: unknown): LayoutState | null {
 export function loadPersistedState(): PersistedState | undefined {
   if (!hasLocalStorage()) return undefined
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(currentStorageKey())
     if (!raw) return undefined
     const parsed: unknown = JSON.parse(raw)
     if (
@@ -170,11 +209,22 @@ export function loadPersistedState(): PersistedState | undefined {
  * Hydrate actions are excluded from the write whitelist (they ARE the data).
  * Always finishes by marking the store hydrated — even with empty storage —
  * so gated UI (onboarding, feed queries) releases exactly once.
+ *
+ * `userId` scopes the read: signed-in users hydrate from `pcd:state:v1:<id>`
+ * (PLAN.md M11), guests keep the legacy key. A saved dark-mode choice is
+ * mirrored to THEME_KEY so the next pre-paint matches this account.
  */
-export function hydrateFromStorage(dispatch: AppDispatch): PersistedState | undefined {
+export function hydrateFromStorage(
+  dispatch: AppDispatch,
+  userId?: string | null,
+): PersistedState | undefined {
+  setStorageScope(userId ?? null)
   const persisted = loadPersistedState()
   if (persisted) {
-    if (persisted.preferences) dispatch(hydratePreferences(persisted.preferences))
+    if (persisted.preferences) {
+      dispatch(hydratePreferences(persisted.preferences))
+      mirrorTheme(persisted.preferences.darkMode)
+    }
     if (persisted.favorites) dispatch(hydrateFavorites(persisted.favorites))
     if (persisted.layout) dispatch(hydrateLayout(persisted.layout))
   }

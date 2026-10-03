@@ -19,6 +19,7 @@ export interface ContentPage<T extends ContentItem> {
 
 export type ApiErrorCode =
   | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'
   | 'UPSTREAM_ERROR'
   | 'RATE_LIMITED'
   | 'NOT_FOUND'

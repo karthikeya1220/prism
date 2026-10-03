@@ -1,11 +1,18 @@
 /**
  * Persistence tests (PLAN.md §3/§7): debounced whitelist writes, payload
- * versioning/sanitization, and post-mount rehydration through a real store —
- * the same wiring Providers uses in the browser.
+ * versioning/sanitization, post-mount rehydration through a real store — the
+ * same wiring Providers uses in the browser — plus per-user key scoping (M11).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makeStore } from '@/store'
-import { STORAGE_KEY, hydrateFromStorage, loadPersistedState } from '@/store/persistence'
+import {
+  STORAGE_KEY,
+  THEME_KEY,
+  hydrateFromStorage,
+  loadPersistedState,
+  setStorageScope,
+  storageKeyFor,
+} from '@/store/persistence'
 import { setDarkMode, toggleCategory } from '@/features/preferences/preferencesSlice'
 import { addFavorite } from '@/features/favorites/favoritesSlice'
 import { setSectionOrder } from '@/features/layout/layoutSlice'
@@ -34,6 +41,7 @@ function readStored(): Record<string, unknown> {
 describe('persistence', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    setStorageScope(null)
     vi.useFakeTimers()
   })
   afterEach(() => {
@@ -74,7 +82,9 @@ describe('persistence', () => {
     store.dispatch(setDarkMode(true))
     await vi.advanceTimersByTimeAsync(300)
 
-    expect(setItem).toHaveBeenCalledTimes(1)
+    // State writes only (the theme mirror may write a second, different key).
+    const stateWrites = setItem.mock.calls.filter(([key]) => key === STORAGE_KEY)
+    expect(stateWrites).toHaveLength(1)
   })
 
   it('rehydrates a valid payload and rejects corrupt or foreign ones', () => {
@@ -151,7 +161,10 @@ describe('persistence', () => {
     expect(store.getState().layout.manualOrder.feed).toEqual(['social:2'])
 
     await vi.advanceTimersByTimeAsync(300)
-    expect(setItem).not.toHaveBeenCalled() // hydrate actions are the storage data
+    // Hydrate actions are the storage data — no state write-back (the direct
+    // THEME_KEY mirror during hydrate is expected and not a listener write).
+    const stateWrites = setItem.mock.calls.filter(([key]) => key === STORAGE_KEY)
+    expect(stateWrites).toHaveLength(0)
   })
 
   it('is a no-op when storage is empty', () => {
@@ -167,5 +180,56 @@ describe('persistence', () => {
     const store = makeStore()
     expect(() => store.dispatch(setDarkMode(true))).not.toThrow()
     await vi.advanceTimersByTimeAsync(300)
+  })
+
+  it('derives per-user keys from the account id (M11)', () => {
+    expect(storageKeyFor(null)).toBe(STORAGE_KEY)
+    expect(storageKeyFor(undefined)).toBe(STORAGE_KEY)
+    expect(storageKeyFor('user_abc')).toBe(`${STORAGE_KEY}:user_abc`)
+  })
+
+  it('hydrates and writes under the signed-in user’s key, not the guest key', async () => {
+    const guestPayload = validPayload()
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(guestPayload))
+    const userKey = storageKeyFor('user_abc')
+    window.localStorage.setItem(
+      userKey,
+      JSON.stringify({
+        version: 1,
+        preferences: { categories: ['sports'], darkMode: false, language: 'en', onboarded: true },
+      }),
+    )
+
+    const store = makeStore()
+    hydrateFromStorage(store.dispatch, 'user_abc')
+    expect(store.getState().preferences.categories).toEqual(['sports'])
+    expect(store.getState().preferences.darkMode).toBe(false)
+
+    store.dispatch(setDarkMode(true))
+    await vi.advanceTimersByTimeAsync(300)
+
+    // Scoped key got the write; the guest payload is untouched.
+    const scoped = JSON.parse(window.localStorage.getItem(userKey) ?? 'null') as {
+      preferences: { darkMode: boolean }
+    }
+    expect(scoped.preferences.darkMode).toBe(true)
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(JSON.stringify(guestPayload))
+    // Device theme mirror follows the account choice (pre-paint script input).
+    expect(window.localStorage.getItem(THEME_KEY)).toBe(
+      JSON.stringify({ version: 1, darkMode: true }),
+    )
+  })
+
+  it('falls back to the guest key when signed out', async () => {
+    const store = makeStore()
+    hydrateFromStorage(store.dispatch, null)
+
+    store.dispatch(toggleCategory('sports'))
+    await vi.advanceTimersByTimeAsync(300)
+
+    const stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? 'null') as {
+      preferences: { categories: string[] }
+    }
+    expect(stored.preferences.categories).toContain('sports')
   })
 })

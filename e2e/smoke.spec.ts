@@ -1,13 +1,14 @@
 import { expect, test } from '@playwright/test'
+import { login } from './helpers'
 
 /**
  * Tooling smoke test: proves Playwright + the Next.js dev server render the
- * M5 app shell (sidebar, header controls, page content) and that the
- * first-run onboarding prompt appears once and dismisses. Replaced by real
- * user-flow tests in M10.
+ * M5 app shell (sidebar, header controls, page content) behind the auth
+ * proxy (M11) and that the first-run onboarding prompt appears once and
+ * dismisses. Replaced by real user-flow tests in M10.
  */
 test('app shell renders with navigation and theme controls', async ({ page }) => {
-  await page.goto('/')
+  await login(page, undefined, { keepOnboarding: true })
   await expect(page).toHaveTitle(/Prism/i)
 
   // First-run onboarding dialog appears and can be completed.

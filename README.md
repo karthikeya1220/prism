@@ -20,11 +20,12 @@ See [`PLAN.md`](./PLAN.md) for the architecture and milestone plan and
 
 ```bash
 npm install
-cp .env.example .env.local   # optional — app falls back to mock data without keys
+cp .env.example .env.local   # then set AUTH_SECRET (required) — see below
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) and sign in (see
+[Authentication](#authentication)).
 
 ## Scripts
 
@@ -44,8 +45,27 @@ Open [http://localhost:3000](http://localhost:3000).
 
 All third-party API calls happen server-side in `/app/api/*` route handlers; keys
 never reach the browser. Copy `.env.example` to `.env.local` and fill in:
-`NEWS_API_KEY`, `TMDB_API_KEY`, `TMDB_READ_ACCESS_TOKEN`. Without keys the app
-runs on deterministic mock data.
+
+| Variable        | Required | Purpose                                        |
+| --------------- | -------- | ---------------------------------------------- |
+| `AUTH_SECRET`   | **yes**  | Signs NextAuth session cookies. Generate with `openssl rand -base64 32` |
+| `NEWS_API_KEY`  | no       | Live news; falls back to mock data without it  |
+| `TMDB_API_KEY`  | no       | Live movies; falls back to mock data without it |
+| `TMDB_READ_ACCESS_TOKEN` | no | Same, alternate TMDB auth               |
+
+## Authentication
+
+Demo sign-in guards every dashboard route (`proxy.ts` redirects signed-out
+visitors to `/login?callbackUrl=…`):
+
+- **Email:** `demo@prism.app`
+- **Password:** `PrismDemo!2026`
+
+Or create an account from the sign-up page. Passwords are stored only as
+scrypt salt:hash pairs (Node `crypto`) — there is no plaintext anywhere in the
+app; the demo hash is baked into `lib/auth/users.ts`. Favorites, topics, and
+layout persist per account (`pcd:state:v1:<userId>` in localStorage); sign-out
+returns you to `/login`.
 
 ## Project Structure
 
@@ -55,4 +75,5 @@ See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,
 
 ## Status
 
-Milestone tracking lives in [`PLAN.md`](./PLAN.md). Current: **M1 — scaffold** ✅.
+Milestone tracking lives in [`PLAN.md`](./PLAN.md). Current: **M8 — drag & drop**
+✅ plus bonus **M11 — mock auth** ✅.
