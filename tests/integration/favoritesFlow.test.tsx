@@ -91,4 +91,29 @@ describe('favorites', () => {
       screen.getByRole('link', { name: 'Browse your feed' }),
     ).toHaveAttribute('href', '/')
   })
+
+  it('keeps the undo toast when the last favorite is removed', async () => {
+    const user = userEvent.setup()
+    const store = makeTestStore()
+    store.dispatch(addFavorite(newsFixture('news:last', 'Final saved story')))
+
+    render(
+      <Provider store={store}>
+        <FavoritesView />
+      </Provider>,
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Remove Final saved story from favorites' }),
+    )
+
+    // The empty state shows, but undo must survive it (regression guard).
+    expect(screen.getByText('No favorites yet')).toBeInTheDocument()
+    const toast = await screen.findByRole('status')
+    expect(toast).toHaveTextContent('Removed “Final saved story”')
+
+    await user.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(screen.getByText('Final saved story')).toBeInTheDocument()
+    expect(store.getState().favorites.ids).toContain('news:last')
+  })
 })

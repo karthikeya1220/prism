@@ -2,12 +2,16 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import ContentGrid from '@/components/feed/ContentGrid'
 import EmptyState from '@/components/ui/EmptyState'
 import Toast from '@/components/ui/Toast'
-import { addFavorite, removeFavorite, selectFavoriteItems } from '@/features/favorites/favoritesSlice'
+import {
+  addFavorite,
+  removeFavorite,
+  selectFavoriteItems,
+} from '@/features/favorites/favoritesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { isMovieItem, isNewsItem, isSocialItem, type ContentItem } from '@/types'
 import { cx } from '@/lib/cx'
@@ -26,6 +30,7 @@ export function FavoritesView() {
   const dispatch = useAppDispatch()
   const [filter, setFilter] = useState<Filter>('all')
   const [undoItem, setUndoItem] = useState<ContentItem | null>(null)
+  const reduce = useReducedMotion()
 
   // Labels live inside the component so a language change re-renders them.
   const filters: { key: Filter; label: string }[] = [
@@ -60,31 +65,44 @@ export function FavoritesView() {
   const isFavorite = useCallback(() => true, [])
   const visibleGroups = groups.filter((group) => filter === 'all' || group.key === filter)
 
+  // Rendered in both branches: removing the *last* favorite must keep undo.
+  const undoToast = (
+    <AnimatePresence>
+      {undoItem && (
+        <Toast
+          key={undoItem.id}
+          message={t('removed', { title: undoItem.title })}
+          onUndo={undo}
+          onDismiss={dismiss}
+        />
+      )}
+    </AnimatePresence>
+  )
+
   if (items.length === 0) {
     return (
-      <EmptyState
-        icon={<Heart size={20} aria-hidden="true" />}
-        title={t('emptyTitle')}
-        hint={t('emptyHint')}
-        action={
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-control bg-accent-solid px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
-          >
-            {t('browseFeed')}
-          </Link>
-        }
-      />
+      <>
+        <EmptyState
+          icon={<Heart size={20} aria-hidden="true" />}
+          title={t('emptyTitle')}
+          hint={t('emptyHint')}
+          action={
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 rounded-control bg-accent-solid px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
+            >
+              {t('browseFeed')}
+            </Link>
+          }
+        />
+        {undoToast}
+      </>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div
-        role="group"
-        aria-label={t('filterLabel')}
-        className="flex flex-wrap items-center gap-2"
-      >
+      <div role="group" aria-label={t('filterLabel')} className="flex flex-wrap items-center gap-2">
         {filters.map((option) => {
           const count =
             option.key === 'all'
@@ -110,44 +128,44 @@ export function FavoritesView() {
         })}
       </div>
 
-      {visibleGroups.map((group) => (
-        <section
-          key={group.key}
-          aria-label={t('groupFavorites', { label: group.label })}
-          className="space-y-4"
-        >
-          <h2 className="text-title font-semibold text-ink">
-            {group.label}
-            <span className="ml-2 text-sm font-normal text-ink-soft">
-              {t('savedCount', { n: group.items.length })}
-            </span>
-          </h2>
-          {group.items.length === 0 ? (
-            <EmptyState
-              title={t('emptyGroupTitle', { type: group.label.toLowerCase() })}
-              hint={t('emptyGroupHint')}
-            />
-          ) : (
-            <ContentGrid
-              items={group.items}
-              label={t('groupFavorites', { label: group.label })}
-              isFavorite={isFavorite}
-              onToggleFavorite={remove}
-            />
-          )}
-        </section>
-      ))}
+      {/* Keyed on the filter: content swaps fade, skipped under reduced motion. */}
+      <motion.div
+        key={filter}
+        initial={reduce ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduce ? 0 : 0.18, ease: 'easeOut' }}
+        className="space-y-6"
+      >
+        {visibleGroups.map((group) => (
+          <section
+            key={group.key}
+            aria-label={t('groupFavorites', { label: group.label })}
+            className="space-y-4"
+          >
+            <h2 className="text-title font-semibold text-ink">
+              {group.label}
+              <span className="ml-2 text-sm font-normal text-ink-soft">
+                {t('savedCount', { n: group.items.length })}
+              </span>
+            </h2>
+            {group.items.length === 0 ? (
+              <EmptyState
+                title={t('emptyGroupTitle', { type: group.label.toLowerCase() })}
+                hint={t('emptyGroupHint')}
+              />
+            ) : (
+              <ContentGrid
+                items={group.items}
+                label={t('groupFavorites', { label: group.label })}
+                isFavorite={isFavorite}
+                onToggleFavorite={remove}
+              />
+            )}
+          </section>
+        ))}
+      </motion.div>
 
-      <AnimatePresence>
-        {undoItem && (
-          <Toast
-            key={undoItem.id}
-            message={t('removed', { title: undoItem.title })}
-            onUndo={undo}
-            onDismiss={dismiss}
-          />
-        )}
-      </AnimatePresence>
+      {undoToast}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { Clapperboard, Newspaper, MessageCircle } from 'lucide-react'
+import { motion, useReducedMotion } from 'framer-motion'
 import TrendingTabs, { type TrendingTab } from '@/components/feed/TrendingTabs'
 import TrendingSection from '@/features/feed/TrendingSection'
 import { toggleFavorite } from '@/features/favorites/favoritesSlice'
@@ -19,6 +20,7 @@ import { useTranslation } from '@/lib/i18n'
 export function TrendingView() {
   const { t } = useTranslation('trending')
   const [tab, setTab] = useState<TrendingTab>('all')
+  const reduce = useReducedMotion()
   const favorites = useAppSelector((state) => state.favorites.byId)
   const dispatch = useAppDispatch()
 
@@ -34,11 +36,14 @@ export function TrendingView() {
   return (
     <div className="space-y-6">
       <TrendingTabs value={tab} onChange={setTab} />
-      <div
+      <motion.div
         key={tab}
         id="trending-panel"
         role="tabpanel"
         aria-labelledby={`trend-tab-${tab}`}
+        initial={reduce ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduce ? 0 : 0.18, ease: 'easeOut' }}
         className="space-y-8"
       >
         <TrendingSection
@@ -65,7 +70,7 @@ export function TrendingView() {
           isFavorite={isFavorite}
           onToggleFavorite={toggle}
         />
-      </div>
+      </motion.div>
     </div>
   )
 }
