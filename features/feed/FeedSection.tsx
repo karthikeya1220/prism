@@ -2,11 +2,12 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { Newspaper } from 'lucide-react'
-import ContentGrid from '@/components/feed/ContentGrid'
+import SortableFeedGrid from '@/components/feed/SortableFeedGrid'
 import CardSkeleton from '@/components/cards/CardSkeleton'
 import ErrorState from '@/components/feed/ErrorState'
 import EmptyState from '@/components/ui/EmptyState'
 import { buildFeed } from '@/features/feed/buildFeed'
+import { useFeedOrder } from '@/features/feed/useFeedOrder'
 import { useInfiniteScroll } from '@/features/feed/useInfiniteScroll'
 import { useGetMoviesQuery, useGetNewsQuery, useGetSocialQuery } from '@/features/feed/contentApi'
 import { toggleFavorite } from '@/features/favorites/favoritesSlice'
@@ -17,9 +18,8 @@ import type { ContentItem } from '@/types'
  * Personalized unified feed (R6): three parallel RTK Query subscriptions
  * (news, movies, social) filtered by the user's categories, merged by the
  * pure `buildFeed` interleave, with skeleton/empty/error states (rule 4),
- * favorite toggling, and IntersectionObserver infinite scroll (R4).
- * Changing preferences changes the query args — RTK Query refetches
- * automatically on a fresh cache key.
+ * favorite toggling, IntersectionObserver infinite scroll (R4), and the
+ * drag-and-drop manual order (M8, via useFeedOrder).
  */
 export function FeedSection() {
   const hydrated = useAppSelector((state) => state.preferences.hydrated)
@@ -50,6 +50,7 @@ export function FeedSection() {
       }),
     [news.data, movies.data, social.data, categories],
   )
+  const { orderedItems, isCustomized, reorder, reset } = useFeedOrder(items)
 
   const firstLoad = news.isLoading || movies.isLoading || social.isLoading
   const fetching = news.isFetching || movies.isFetching || social.isFetching
@@ -80,18 +81,6 @@ export function FeedSection() {
     [dispatch],
   )
 
-  const skeleton = (
-    <div
-      role="status"
-      aria-label="Loading your feed"
-      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-    >
-      {Array.from({ length: 6 }, (_, index) => (
-        <CardSkeleton key={index} />
-      ))}
-    </div>
-  )
-
   if (anyError && items.length === 0) {
     return <ErrorState onRetry={retry} />
   }
@@ -99,7 +88,15 @@ export function FeedSection() {
   return (
     <div className="space-y-4">
       {!hydrated || (firstLoad && items.length === 0) ? (
-        skeleton
+        <div
+          role="status"
+          aria-label="Loading your feed"
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          {Array.from({ length: 6 }, (_, index) => (
+            <CardSkeleton key={index} />
+          ))}
+        </div>
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Newspaper size={20} aria-hidden="true" />}
@@ -125,11 +122,14 @@ export function FeedSection() {
               </button>
             </div>
           )}
-          <ContentGrid
-            items={items}
+          <SortableFeedGrid
+            items={orderedItems}
             label="Your feed"
             isFavorite={(id) => id in favorites}
             onToggleFavorite={toggle}
+            onReorder={reorder}
+            showReset={isCustomized}
+            onReset={reset}
           />
         </>
       )}

@@ -10,7 +10,9 @@
 > M5 ✅ (feed, trending tabs, favorites, settings, onboarding) ·
 > M6 ✅ (settings wiring + feed refetch — delivered inside M5) ·
 > M7 ✅ (debounced cross-type search, /search page, grouped results) ·
-> M8–M13 pending (M9 partly: trending + favorites sections done; transitions
+> M8 ✅ (dnd-kit sortable feed — pointer/touch/keyboard, announcements,
+> layout slice persistence, Reset order) ·
+> M9–M13 pending (M9 partly: trending + favorites sections done; transitions
 > and final a11y pass remain).
 
 ---
@@ -425,6 +427,18 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
 - **M8 — Drag & drop.** dnd-kit sortable feed, KeyboardSensor, `feedOrder`
   persistence, `aria-live` announcements, `prefers-reduced-motion` disables animations.
   *AC:* reorder by mouse **and keyboard**, persists after reload; tests. `feat:`
+  **Done 2026-10-03.** `@dnd-kit/core|sortable|utilities`; activators on a
+  per-card grip handle (CTA/favorite clicks never start a drag); pointer
+  (distance 6) / touch (250 ms) / keyboard (Space → arrows → Space, Escape)
+  sensors; DragOverlay ghost (WAAPI drop animation, disabled under
+  `prefers-reduced-motion`); accent insertion line (top/bottom edge);
+  `aria-live` announcements per step + screen-reader instructions; order
+  committed through the pre-existing `layout.manualOrder.feed` slice
+  (whitelisted → localStorage) with `useFeedOrder` reconciliation (saved ids
+  first, new pages append, stale ids dropped, `sameIds` loop-guard) and a
+  "Reset order" control. Verified: `lint`, `typecheck`, 147 tests (new:
+  feedOrder, feedAnnouncements, keyboard-reorder integration with a jsdom
+  rect mock). `feat:`
 - **M9 — Trending, Favorites, polish.** TrendingSection (scoring), FavoritesSection,
   section transitions, final a11y pass (contrast, labels).
   *AC:* both sections render from store-only data; axe/manual a11y checks pass. `feat:`

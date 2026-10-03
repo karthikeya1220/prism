@@ -1,9 +1,7 @@
 'use client'
 
 import type { ContentItem } from '@/types'
-import NewsCard from '@/components/cards/NewsCard'
-import MovieCard from '@/components/cards/MovieCard'
-import SocialCard from '@/components/cards/SocialCard'
+import { renderCard } from '@/components/feed/renderCard'
 
 export interface ContentGridProps {
   items: ContentItem[]
@@ -15,26 +13,9 @@ export interface ContentGridProps {
   highlight?: string
 }
 
-function renderCard(
-  item: ContentItem,
-  isFavorite: (id: string) => boolean,
-  onToggleFavorite: (item: ContentItem) => void,
-  highlight: string,
-) {
-  switch (item.type) {
-    case 'news':
-      return <NewsCard item={item} isFavorite={isFavorite(item.id)} onToggleFavorite={onToggleFavorite} highlight={highlight} />
-    case 'movie':
-      return <MovieCard item={item} isFavorite={isFavorite(item.id)} onToggleFavorite={onToggleFavorite} highlight={highlight} />
-    case 'social':
-      return <SocialCard item={item} isFavorite={isFavorite(item.id)} onToggleFavorite={onToggleFavorite} highlight={highlight} />
-  }
-}
-
 /**
- * Responsive card grid shared by the feed, trending, search, and favorites
- * views. Rendering dispatches on the `ContentItem` discriminant so every
- * consumer gets the right variant without repeating the switch.
+ * Responsive card grid shared by the trending, search, and favorites views
+ * (the feed uses the sortable variant). Card dispatch lives in renderCard.
  */
 export function ContentGrid({ items, label, isFavorite, onToggleFavorite, highlight = '' }: ContentGridProps) {
   return (

@@ -20,6 +20,12 @@ if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
     }) as MediaQueryList
 }
 
+// jsdom does not implement scrollIntoView; @dnd-kit's keyboard sensor calls it
+// when a lifted card sits outside the viewport. No-op stand-in.
+if (typeof window !== 'undefined' && typeof Element !== 'undefined' && !('scrollIntoView' in Element.prototype)) {
+  ;(Element.prototype as { scrollIntoView?: () => void }).scrollIntoView = () => {}
+}
+
 // RTK Query's fetchBaseQuery constructs `new Request('/api/...')` with a
 // relative URL. Browsers resolve that against the document, but Node's undici
 // Request rejects it (ERR_INVALID_URL). Resolve string inputs against the
