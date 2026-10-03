@@ -105,6 +105,76 @@ Implementation: `app/api/social/stream/route.ts` → `hooks/useSocialStream.ts`
 → `features/feed/realtimeSlice.ts` (`pending` → `live`, ephemeral — never
 persisted) merged into the social stream by `FeedSection`.
 
+## User Flow
+
+1. **Sign in** — unauthenticated visits bounce to `/login?callbackUrl=…`; the
+   seeded demo account is in [Authentication](#authentication). First login
+   shows a one-time **onboarding dialog** (Escape or the button dismisses it
+   and is remembered).
+2. **Feed** (`/`) — a unified, interleaved grid of news, movies, and social
+   posts for your chosen topics. Live SSE posts queue behind the
+   **"N new posts"** pill; click it to promote them to the top. Cards can be
+   reordered by keyboard or pointer (Space → arrows → Space) and hearted.
+3. **Trending** — the same sources scored and ranked, switchable by category
+   tabs.
+4. **Favorites** (`/favorites`) — everything you hearted, grouped by type
+   behind filter chips; removing a card raises an **undo toast**, and it all
+   persists per account.
+5. **Settings** (`/settings`) — pick up to 5 feed topics (the feed refetches
+   immediately), switch dark mode, or change the interface language
+   (English / हिन्दी).
+6. **Search** — the header bar debounces (400 ms) into `/search?q=…`, grouped
+   by source with filter chips; two characters minimum.
+7. **Profile** (`/profile`) — display name and avatar, reflected in the
+   account menu. **Sign out** returns you to `/login` and re-protects the
+   dashboard.
+
+Preferences, favorites, layout order, language, and theme all persist to
+`localStorage` under a per-account key and survive reloads.
+
+## Architecture
+
+```
+route handlers (/app/api/*)   ← the only place external APIs are called
+        │  RTK Query (features/*/api or shared baseApi)
+        ▼
+Redux store (/store)          ← slices: preferences, favorites, layout,
+        │                          feed (realtime), auth, ui
+        │  selectors + listener middleware (debounced persistence)
+        ▼
+components (/components)      ← presentational; features/ containers wire
+                                store + RTK Query + i18n
+```
+
+- **State**: `Redux Toolkit` owns all client state. RTK Query handles
+  fetching/caching for news, movies, and social; every response is validated
+  and merged into the `ContentItem` discriminated union (`/types`).
+- **Persistence**: `store/persistence.ts` writes a whitelist of slices
+  (preferences, favorites, layout) to `localStorage`, debounced at 250 ms and
+  scoped per user (`pcd:state:v1:<id>`); rehydration happens after mount so SSR
+  markup and the first client render match.
+- **Data flow**: pages are server components for metadata/layout; client
+  containers (`features/*`) subscribe to the store, fire RTK Query, and render
+  `components/*` with loading (skeleton), empty, and error states.
+- **Security**: no API keys reach the browser — every third-party call goes
+  through the route handlers, which fall back to `/mocks` when a key is absent;
+  `AUTH_SECRET` lives in `.env.local` only.
+
+## Demo Video Script
+
+A ~60 s walkthrough (record at 1280×720):
+
+1. **0:00–0:05** Title: sign-in screen with the demo credentials typed in.
+2. **0:05–0:15** Feed loads (skeleton → grid); dismiss onboarding; scroll.
+3. **0:15–0:25** New-posts pill appears — click it, live posts land on top.
+4. **0:25–0:35** Keyboard reorder: focus a card handle, Space, arrows, Space;
+   Reset order.
+5. **0:35–0:45** Heart a card → Favorites page → filter chips → remove →
+   Undo toast → reload to show persistence.
+6. **0:45–0:55** Settings: toggle a topic (feed refetches), dark mode, switch
+   to हिन्दी.
+7. **0:55–1:00** Search "telescope" → grouped results; closing title.
+
 ## Project Structure
 
 See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,feed}`,
@@ -113,6 +183,7 @@ See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,
 
 ## Status
 
-Milestone tracking lives in [`PLAN.md`](./PLAN.md). Current: **M8 — drag & drop**
-✅ plus bonuses **M11 — mock auth** ✅, **M12 — realtime SSE feed** ✅, and
-**M13 — i18n (en + hi)** ✅.
+Milestone tracking lives in [`PLAN.md`](./PLAN.md). Core **M1–M10** ✅ plus
+bonuses **M11 — mock auth** ✅, **M12 — realtime SSE feed** ✅, and
+**M13 — i18n (en + hi)** ✅. E2E coverage: 14 Playwright tests (auth, search,
+theme, preferences, favorites, drag-and-drop, axe-core a11y scans).

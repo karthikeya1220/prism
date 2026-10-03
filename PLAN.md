@@ -12,8 +12,10 @@
 > M7 ✅ (debounced cross-type search, /search page, grouped results) ·
 > M8 ✅ (dnd-kit sortable feed — pointer/touch/keyboard, announcements,
 > layout slice persistence, Reset order) ·
-> M9 partly (trending + favorites sections done; transitions and final a11y
-> pass remain) · M11 ✅ (NextAuth v5 Credentials + profile page) ·
+> M9 ✅ (trending + favorites sections, keyed section transitions, axe-core
+> a11y pass) · M10 ✅ (E2E suite — auth, search, theme, prefs, favorites,
+> dnd, a11y; README user flow + architecture + demo script) ·
+> M11 ✅ (NextAuth v5 Credentials + profile page) ·
 > M12 ✅ (SSE live social feed + "N new posts" pill) · M13 ✅ (i18n en + hi)
 
 ---
@@ -443,10 +445,24 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
 - **M9 — Trending, Favorites, polish.** TrendingSection (scoring), FavoritesSection,
   section transitions, final a11y pass (contrast, labels).
   *AC:* both sections render from store-only data; axe/manual a11y checks pass. `feat:`
+  *Done 2026-10-03:* trending + favorites landed inside M5/M7 (see above); this
+  pass added the keyed `motion.div` section transitions in `TrendingView`
+  (tab) and `FavoritesView` (filter chip), reduced-motion aware, and the final
+  a11y sweep via axe-core (see M10). One fix surfaced: `FavoritesView` dropped
+  the undo toast when the *last* favorite was removed — now rendered in both
+  branches (unit-tested).
 - **M10 — E2E + submission.** Playwright suite (search, DnD, theme, prefs,
   favorites), README (setup, user flow, architecture), a11y/Lighthouse pass,
   demo-video script, optional deploy.
   *AC:* `npx playwright test` green; README complete. `test:` + `docs:`
+  *Done 2026-10-03:* 7 new specs (14 total, green) — `search`, `theme`,
+  `preferences`, `favorites`, `dnd` (keyboard sensor end-to-end + Reset
+  order), and `a11y` (axe-core injected via `axe.source`, scans /login and
+  the dashboard pages under reduced motion so entrance animations can't skew
+  contrast sampling). E2E helper `waitForPersist` guards the 250 ms
+  persistence debounce. README gained User Flow, Architecture, and a Demo
+  Video Script section. (Lighthouse pass not run locally; axe covers the
+  a11y AC.)
 
 ### Bonus milestones (selected 2026-10-02; core M1–M10 stays submission-ready without them)
 
