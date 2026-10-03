@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, X } from 'lucide-react'
 import { useDebounce } from '@/hooks/useDebounce'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SearchBarProps {
   className?: string
@@ -24,6 +25,7 @@ export const MIN_QUERY_LENGTH = 2
  * pause never piles up back-button entries.
  */
 export function SearchBar({ className }: SearchBarProps) {
+  const { t } = useTranslation('search')
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
@@ -97,7 +99,7 @@ export function SearchBar({ className }: SearchBarProps) {
       className={className}
     >
       <label htmlFor="global-search" className="sr-only">
-        Search news, movies, and posts
+        {t('label')}
       </label>
       <div className="relative">
         <Search
@@ -116,7 +118,7 @@ export function SearchBar({ className }: SearchBarProps) {
           onKeyDown={(e) => {
             if (e.key === 'Escape') clear()
           }}
-          placeholder="Search news, movies, posts…"
+          placeholder={t('placeholder')}
           autoComplete="off"
           aria-describedby="global-search-hint"
           className="h-10 w-full rounded-control border border-line bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-ink-soft"
@@ -125,15 +127,14 @@ export function SearchBar({ className }: SearchBarProps) {
           <button
             type="button"
             onClick={clear}
-            aria-label="Clear search"
+            aria-label={t('clear')}
             className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded text-ink-soft transition-colors hover:bg-line/60 hover:text-ink"
           >
             <X size={14} aria-hidden="true" />
           </button>
         )}
         <p id="global-search-hint" className="sr-only">
-          Press Enter to search now. Results update automatically after a short
-          pause. Press Escape to clear.
+          {t('hint')}
         </p>
       </div>
     </form>

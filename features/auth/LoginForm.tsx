@@ -4,7 +4,13 @@ import { useState, type FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
 import { Field } from './Field'
 import { navigate } from '@/lib/nav'
-import { safeCallbackUrl, validateEmail, validatePassword } from '@/lib/auth/validation'
+import {
+  safeCallbackUrl,
+  validateEmail,
+  validatePassword,
+  type ValidationT,
+} from '@/lib/auth/validation'
+import { useTranslation } from '@/lib/i18n'
 
 export interface LoginFormProps {
   /** Same-site path to return to after signing in (?callbackUrl=). */
@@ -22,6 +28,9 @@ interface FieldErrors {
  * success so the Redux store re-hydrates under the signed-in user's key.
  */
 export function LoginForm({ callbackUrl }: LoginFormProps) {
+  const { t } = useTranslation('auth')
+  /** Routes raw validation keys through the auth namespace. */
+  const vt: ValidationT = (key, vars) => t(`errors.${key}`, vars)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
@@ -31,8 +40,8 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     const next: FieldErrors = {}
-    const emailError = validateEmail(email)
-    const passwordError = validatePassword(password)
+    const emailError = validateEmail(email, vt)
+    const passwordError = validatePassword(password, vt)
     if (emailError) next.email = emailError
     if (passwordError) next.password = passwordError
     setErrors(next)
@@ -48,12 +57,12 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         redirectTo: safeCallbackUrl(callbackUrl),
       })
       if (result?.error || !result?.url) {
-        setFormError('Incorrect email or password.')
+        setFormError(t('wrongCredentials'))
         return
       }
       navigate(result.url)
     } catch {
-      setFormError('Something went wrong. Please try again.')
+      setFormError(t('genericError'))
     } finally {
       setPending(false)
     }
@@ -68,18 +77,18 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
       )}
       <Field
         id="login-email"
-        label="Email"
+        label={t('email')}
         type="email"
         value={email}
         onChange={setEmail}
         error={errors.email}
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder={t('emailPlaceholder')}
         required
       />
       <Field
         id="login-password"
-        label="Password"
+        label={t('password')}
         type="password"
         value={password}
         onChange={setPassword}
@@ -92,7 +101,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
         disabled={pending}
         className="w-full rounded-control bg-accent-solid px-4 py-2.5 text-sm font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? 'Signing in…' : 'Sign in'}
+        {pending ? t('signingIn') : t('signIn')}
       </button>
     </form>
   )

@@ -8,6 +8,7 @@ import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass } from './cardStyles'
 import { Highlight } from '@/components/ui/Highlight'
 import { timeAgo } from '@/lib/format'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SocialCardProps {
   item: SocialItem
@@ -19,6 +20,7 @@ export interface SocialCardProps {
 
 /** Social variant of the content card: author + engagement counts. */
 export function SocialCard({ item, isFavorite, onToggleFavorite, highlight = '' }: SocialCardProps) {
+  const { t } = useTranslation('cards')
   const reduce = useReducedMotion()
   const initials = item.author.displayName
     .split(/\s+/)
@@ -70,11 +72,11 @@ export function SocialCard({ item, isFavorite, onToggleFavorite, highlight = '' 
             rel="noreferrer"
             className={cardCtaClass}
           >
-            View post
+            {t('viewPost')}
             <ArrowUpRight size={15} aria-hidden="true" />
           </a>
           <FavoriteButton
-            title={`post by @${item.author.handle}`}
+            title={t('postBy', { handle: item.author.handle })}
             pressed={isFavorite}
             onToggle={() => onToggleFavorite(item)}
           />

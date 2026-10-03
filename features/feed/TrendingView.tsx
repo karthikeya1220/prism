@@ -7,6 +7,7 @@ import TrendingSection from '@/features/feed/TrendingSection'
 import { toggleFavorite } from '@/features/favorites/favoritesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import type { ContentItem } from '@/types'
+import { useTranslation } from '@/lib/i18n'
 
 /**
  * Trending page body (R7): category tabs (All + each category) over three
@@ -16,6 +17,7 @@ import type { ContentItem } from '@/types'
  * (type, category) so tab switches are instant after the first visit.
  */
 export function TrendingView() {
+  const { t } = useTranslation('trending')
   const [tab, setTab] = useState<TrendingTab>('all')
   const favorites = useAppSelector((state) => state.favorites.byId)
   const dispatch = useAppDispatch()
@@ -42,7 +44,7 @@ export function TrendingView() {
         <TrendingSection
           type="news"
           category={category}
-          heading="Trending news"
+          heading={t('sectionNews')}
           icon={<Newspaper size={20} />}
           isFavorite={isFavorite}
           onToggleFavorite={toggle}
@@ -50,7 +52,7 @@ export function TrendingView() {
         <TrendingSection
           type="movie"
           category={category}
-          heading="Trending movies"
+          heading={t('sectionMovies')}
           icon={<Clapperboard size={20} />}
           isFavorite={isFavorite}
           onToggleFavorite={toggle}
@@ -58,7 +60,7 @@ export function TrendingView() {
         <TrendingSection
           type="social"
           category={category}
-          heading="Trending social"
+          heading={t('sectionSocial')}
           icon={<MessageCircle size={20} />}
           isFavorite={isFavorite}
           onToggleFavorite={toggle}

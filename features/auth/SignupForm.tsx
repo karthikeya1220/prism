@@ -9,7 +9,9 @@ import {
   validateEmail,
   validateName,
   validatePassword,
+  type ValidationT,
 } from '@/lib/auth/validation'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SignupFormProps {
   /** Same-site path to return to after signing in (?callbackUrl=). */
@@ -28,6 +30,9 @@ interface FieldErrors {
  * credentials and navigates to a freshly hydrated dashboard.
  */
 export function SignupForm({ callbackUrl }: SignupFormProps) {
+  const { t } = useTranslation('auth')
+  /** Routes raw validation keys through the auth namespace. */
+  const vt: ValidationT = (key, vars) => t(`errors.${key}`, vars)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,9 +43,9 @@ export function SignupForm({ callbackUrl }: SignupFormProps) {
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     const next: FieldErrors = {}
-    const nameError = validateName(name)
-    const emailError = validateEmail(email)
-    const passwordError = validatePassword(password)
+    const nameError = validateName(name, vt)
+    const emailError = validateEmail(email, vt)
+    const passwordError = validatePassword(password, vt)
     if (nameError) next.name = nameError
     if (emailError) next.email = emailError
     if (passwordError) next.password = passwordError
@@ -59,7 +64,7 @@ export function SignupForm({ callbackUrl }: SignupFormProps) {
         const body = (await response.json().catch(() => null)) as
           | { error?: { message?: string } }
           | null
-        setFormError(body?.error?.message ?? 'Could not create the account.')
+        setFormError(body?.error?.message ?? t('createFailed'))
         return
       }
       const result = await signIn('credentials', {
@@ -69,12 +74,12 @@ export function SignupForm({ callbackUrl }: SignupFormProps) {
         redirectTo: safeCallbackUrl(callbackUrl),
       })
       if (result?.error || !result?.url) {
-        setFormError('Account created, but sign-in failed. Try logging in.')
+        setFormError(t('signinAfterSignup'))
         return
       }
       navigate(result.url)
     } catch {
-      setFormError('Something went wrong. Please try again.')
+      setFormError(t('genericError'))
     } finally {
       setPending(false)
     }
@@ -89,34 +94,34 @@ export function SignupForm({ callbackUrl }: SignupFormProps) {
       )}
       <Field
         id="signup-name"
-        label="Display name"
+        label={t('displayName')}
         value={name}
         onChange={setName}
         error={errors.name}
         autoComplete="name"
-        placeholder="Jordan Lee"
+        placeholder={t('namePlaceholder')}
         required
       />
       <Field
         id="signup-email"
-        label="Email"
+        label={t('email')}
         type="email"
         value={email}
         onChange={setEmail}
         error={errors.email}
         autoComplete="email"
-        placeholder="you@example.com"
+        placeholder={t('emailPlaceholder')}
         required
       />
       <Field
         id="signup-password"
-        label="Password"
+        label={t('password')}
         type="password"
         value={password}
         onChange={setPassword}
         error={errors.password}
         autoComplete="new-password"
-        placeholder="At least 8 characters"
+        placeholder={t('passwordPlaceholder')}
         required
       />
       <button
@@ -124,7 +129,7 @@ export function SignupForm({ callbackUrl }: SignupFormProps) {
         disabled={pending}
         className="w-full rounded-control bg-accent-solid px-4 py-2.5 text-sm font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? 'Creating account…' : 'Create account'}
+        {pending ? t('creatingAccount') : t('createAccount')}
       </button>
     </form>
   )

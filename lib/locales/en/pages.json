@@ -1,0 +1,29 @@
+{
+  "feed": {
+    "title": "Your feed",
+    "subtitle": "News, films, and social posts from your topics, woven into one stream.",
+    "latest": "Latest for you"
+  },
+  "trending": {
+    "title": "Trending",
+    "subtitle": "What is rising fastest across news, films, and social right now — filtered by the topic you pick."
+  },
+  "favorites": {
+    "title": "Favorites",
+    "subtitle": "Everything you kept, saved on this device and ready to revisit."
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Shape what Prism pulls for you. Changes save automatically and follow you across reloads.",
+    "topicsHeading": "Feed topics",
+    "topicsCopy": "These decide which stories, films, and posts reach your feed — and the feed refetches the moment you change them."
+  },
+  "search": {
+    "title": "Search",
+    "subtitle": "One query across news, films, and social posts — grouped by source."
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "How you appear in the account menu. Saved to your account — sign in anywhere and it follows you."
+  }
+}

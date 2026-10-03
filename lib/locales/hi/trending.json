@@ -1,0 +1,11 @@
+{
+  "tabsLabel": "ट्रेंडिंग श्रेणियाँ",
+  "sectionNews": "ट्रेंडिंग ख़बरें",
+  "sectionMovies": "ट्रेंडिंग फ़िल्में",
+  "sectionSocial": "ट्रेंडिंग सोशल",
+  "loadError": "{{section}} लोड नहीं हो सका",
+  "loadingAria": "{{section}} लोड हो रहा है",
+  "itemsCount": "{{n}} आइटम",
+  "emptyTitle": "{{section}} में अभी कुछ ट्रेंड नहीं कर रहा",
+  "emptyHint": "आपके विषय चलते ही नई गति यहाँ दिखेगी।"
+}

@@ -2,8 +2,10 @@ import type { ReactNode } from 'react'
 import Brand from '@/components/layout/Brand'
 
 export interface AuthCardProps {
-  title: string
-  description: string
+  /** Heading — a string or an i18n `<T>` island on server pages. */
+  title: ReactNode
+  /** Subheading — a string or an i18n `<T>` island on server pages. */
+  description: ReactNode
   /** The auth form (client component). */
   children: ReactNode
   /** Link row under the card (e.g. “Create an account”). */

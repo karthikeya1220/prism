@@ -67,6 +67,30 @@ app; the demo hash is baked into `lib/auth/users.ts`. Favorites, topics, and
 layout persist per account (`pcd:state:v1:<userId>` in localStorage); sign-out
 returns you to `/login`.
 
+## Language (i18n)
+
+The interface ships in **English** and **Hindi** (`react-i18next` + typed JSON
+resources under `lib/locales/{en,hi}/` — 11 namespaces: `common`, `nav`,
+`pages`, `feed`, `settings`, `onboarding`, `cards`, `favorites`, `search`,
+`trending`, `auth`). Switch via the header select or **Settings → Interface
+language**; the choice applies immediately (`LanguageSync`), updates
+`<html lang>`, and persists with your preferences across reloads.
+
+Conventions:
+
+- Client components call `useTranslation('<ns>')` imported from `@/lib/i18n`
+  (never `react-i18next` directly), so the i18next instance is always
+  initialized first. Unqualified keys fall back to the `common` namespace.
+- Server pages render copy through client islands: `<T ns="pages"
+  k="feed.title" />` (`lib/i18n/T.tsx`).
+- `en` and `hi` key trees are enforced equal (placeholders too) by
+  `tests/unit/i18nResources.test.ts`; `hi` is typed `typeof en`.
+
+Known gaps (documented intentionally): `<head>` `metadata.title` and
+server-rendered landmark names (e.g. the profile section's `aria-label`) stay
+English; API-passthrough error messages from route handlers stay English;
+external data labels (TMDB genre names, news source names) are not translated.
+
 ## Project Structure
 
 See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,feed}`,
@@ -76,4 +100,4 @@ See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,
 ## Status
 
 Milestone tracking lives in [`PLAN.md`](./PLAN.md). Current: **M8 — drag & drop**
-✅ plus bonus **M11 — mock auth** ✅.
+✅ plus bonus **M11 — mock auth** ✅ and **M13 — i18n (en + hi)** ✅.

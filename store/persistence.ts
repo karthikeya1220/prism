@@ -124,7 +124,7 @@ function sanitizePreferences(value: unknown): PersistedPreferences | null {
     // The feed needs a topic: fall back when the payload ends up empty.
     categories: categories.length > 0 ? categories : [...DEFAULT_CATEGORIES],
     darkMode: typeof v.darkMode === 'boolean' ? v.darkMode : false,
-    language: v.language === 'de' ? 'de' : 'en',
+    language: v.language === 'hi' ? 'hi' : 'en',
     onboarded: v.onboarded === true,
   }
 }

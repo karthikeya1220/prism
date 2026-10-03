@@ -1,0 +1,11 @@
+{
+  "tabsLabel": "Trending categories",
+  "sectionNews": "Trending news",
+  "sectionMovies": "Trending movies",
+  "sectionSocial": "Trending social",
+  "loadError": "Prism could not load {{section}}",
+  "loadingAria": "Loading {{section}}",
+  "itemsCount": "{{n}} items",
+  "emptyTitle": "Nothing trending in {{section}} yet",
+  "emptyHint": "Fresh momentum shows up here as soon as your topics start moving."
+}

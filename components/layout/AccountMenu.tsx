@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown, UserRound } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 const menuItemClass =
   'flex w-full items-center justify-between gap-3 rounded-control px-3 py-2 text-left text-sm text-ink transition-colors hover:bg-line/60'
@@ -26,6 +27,7 @@ function initialsOf(name: string): string {
  * cycle, Escape closes and restores focus, outside pointer-down dismisses.
  */
 export function AccountMenu() {
+  const { t } = useTranslation('nav')
   const { data: session, status } = useSession()
   const [open, setOpen] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -33,8 +35,11 @@ export function AccountMenu() {
   const reduce = useReducedMotion()
 
   const user = session?.user
-  const name = user?.name ?? 'Account'
-  const initials = user ? initialsOf(user.name ?? user.email ?? 'Account') || '?' : ''
+  const fallbackName = t('account.fallback')
+  const name = user?.name ?? fallbackName
+  const initials = user
+    ? initialsOf(user.name ?? user.email ?? fallbackName) || '?'
+    : ''
   const avatar = user?.avatar ?? null
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export function AccountMenu() {
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`Account menu for ${name}`}
+        aria-label={t('account.menuFor', { name })}
         onClick={() => setOpen((v) => !v)}
         className="flex h-10 items-center gap-1 rounded-control px-1 transition-colors hover:bg-line/60"
       >
@@ -110,7 +115,7 @@ export function AccountMenu() {
           <motion.div
             ref={menuRef}
             role="menu"
-            aria-label="Account"
+            aria-label={t('account.label')}
             onKeyDown={onMenuKeyDown}
             initial={reduce ? false : { opacity: 0, y: -4, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -129,7 +134,7 @@ export function AccountMenu() {
               onClick={() => setOpen(false)}
               className={menuItemClass}
             >
-              Settings
+              {t('settings')}
             </Link>
             <Link
               href="/profile"
@@ -137,7 +142,7 @@ export function AccountMenu() {
               onClick={() => setOpen(false)}
               className={menuItemClass}
             >
-              Profile
+              {t('profile')}
             </Link>
             <button
               type="button"
@@ -145,7 +150,7 @@ export function AccountMenu() {
               onClick={() => signOut({ callbackUrl: '/login' })}
               className={menuItemClass}
             >
-              Sign out
+              {t('signOut')}
             </button>
           </motion.div>
         )}

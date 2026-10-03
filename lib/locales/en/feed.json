@@ -1,0 +1,8 @@
+{
+  "loading": "Loading your feed",
+  "emptyTitle": "Nothing matches your topics yet",
+  "emptyHint": "Widen your topics in Settings — more stories, films, and posts will land here.",
+  "partialError": "Some sections couldn't load — your feed may be incomplete.",
+  "gridLabel": "Your feed",
+  "loadingMore": "Loading more…"
+}

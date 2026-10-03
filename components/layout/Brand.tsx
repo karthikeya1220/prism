@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 /**
  * Prism brand mark: a white prism silhouette on a spectrum tile — the only
@@ -9,10 +10,11 @@ import { cx } from '@/lib/cx'
  * Links home; the wordmark becomes screen-reader-only in the collapsed rail.
  */
 export function Brand({ showName = true }: { showName?: boolean }) {
+  const { t } = useTranslation('nav')
   return (
     <Link
       href="/"
-      aria-label="Prism — go to feed"
+      aria-label={t('brandHome')}
       className="flex min-w-0 items-center gap-2.5 rounded-control px-1.5 py-1"
     >
       <span

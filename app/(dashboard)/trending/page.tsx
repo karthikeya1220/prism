@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import TrendingView from '@/features/feed/TrendingView'
+import { T } from '@/lib/i18n/T'
 
 export const metadata: Metadata = { title: 'Trending — Prism' }
 
@@ -8,10 +9,11 @@ export default function TrendingPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1.5">
-        <h1 className="text-display font-semibold text-ink">Trending</h1>
+        <h1 className="text-display font-semibold text-ink">
+          <T ns="pages" k="trending.title" />
+        </h1>
         <p className="max-w-[60ch] text-ink-soft">
-          What is rising fastest across news, films, and social right now —
-          filtered by the topic you pick.
+          <T ns="pages" k="trending.subtitle" />
         </p>
       </header>
       <TrendingView />

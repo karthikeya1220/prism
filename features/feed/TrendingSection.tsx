@@ -8,6 +8,7 @@ import ErrorState from '@/components/feed/ErrorState'
 import EmptyState from '@/components/ui/EmptyState'
 import { useGetTrendingQuery } from '@/features/feed/contentApi'
 import type { ContentItem } from '@/types'
+import { useTranslation } from '@/lib/i18n'
 
 export interface TrendingSectionProps {
   /** Which content slice /api/trending should score. */
@@ -32,13 +33,14 @@ export function TrendingSection({
   isFavorite,
   onToggleFavorite,
 }: TrendingSectionProps) {
+  const { t } = useTranslation('trending')
   const { data, isLoading, isError, refetch } = useGetTrendingQuery({ type, category })
 
   if (isError) {
     return (
       <ErrorState
         onRetry={() => refetch()}
-        message={`Prism could not load ${heading.toLowerCase()}`}
+        message={t('loadError', { section: heading.toLowerCase() })}
       />
     )
   }
@@ -52,12 +54,16 @@ export function TrendingSection({
         {heading}
         {data && (
           <span className="text-sm font-normal text-ink-soft">
-            {data.items.length} items
+            {t('itemsCount', { n: data.items.length })}
           </span>
         )}
       </h2>
       {isLoading ? (
-        <div role="status" aria-label={`Loading ${heading}`} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div
+          role="status"
+          aria-label={t('loadingAria', { section: heading })}
+          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+        >
           {Array.from({ length: 3 }, (_, index) => (
             <CardSkeleton key={index} />
           ))}
@@ -65,8 +71,8 @@ export function TrendingSection({
       ) : (data?.items.length ?? 0) === 0 ? (
         <EmptyState
           icon={<Flame size={20} aria-hidden="true" />}
-          title={`Nothing trending in ${heading.toLowerCase()} yet`}
-          hint="Fresh momentum shows up here as soon as your topics start moving."
+          title={t('emptyTitle', { section: heading.toLowerCase() })}
+          hint={t('emptyHint')}
         />
       ) : (
         <ContentGrid

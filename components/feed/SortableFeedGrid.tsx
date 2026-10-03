@@ -22,10 +22,15 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable'
 import { RotateCcw } from 'lucide-react'
-import { buildAnnouncements, getIndicator } from '@/components/feed/feedAnnouncements'
+import {
+  buildAnnouncements,
+  getIndicator,
+  type Translator,
+} from '@/components/feed/feedAnnouncements'
 import { renderCard } from '@/components/feed/renderCard'
 import SortableCard from '@/components/feed/SortableCard'
 import type { ContentItem } from '@/types'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SortableFeedGridProps {
   /** Display order — the manual order has already been applied. */
@@ -58,6 +63,7 @@ export function SortableFeedGrid({
   showReset = false,
   onReset,
 }: SortableFeedGridProps) {
+  const { t } = useTranslation('common')
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
   const reduce = useReducedMotion()
@@ -69,7 +75,7 @@ export function SortableFeedGrid({
   )
 
   const ids = items.map((item) => item.id)
-  const announcements = buildAnnouncements(items)
+  const announcements = buildAnnouncements(items, t as unknown as Translator)
 
   const handleStart = ({ active }: DragStartEvent) => {
     setActiveId(String(active.id))
@@ -101,8 +107,7 @@ export function SortableFeedGrid({
       accessibility={{
         announcements,
         screenReaderInstructions: {
-          draggable:
-            'Space to pick up the card. Arrow keys to move it. Space to drop. Escape to cancel.',
+          draggable: t('dnd.instructions'),
         },
       }}
       onDragStart={handleStart}
@@ -118,7 +123,7 @@ export function SortableFeedGrid({
             className="mb-3 inline-flex items-center gap-1.5 rounded-control border border-line px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-ink-soft hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <RotateCcw size={13} aria-hidden="true" />
-            Reset order
+            {t('resetOrder')}
           </button>
         </div>
       )}

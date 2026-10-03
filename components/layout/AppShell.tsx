@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import { useSlideOverDrawer } from '@/hooks/useSlideOverDrawer'
+import { useTranslation } from '@/lib/i18n'
 
 export interface AppShellProps {
   children: ReactNode
@@ -19,6 +20,7 @@ export interface AppShellProps {
  * column and the fixed sidebar can never drift apart.
  */
 export function AppShell({ children }: AppShellProps) {
+  const { t } = useTranslation('nav')
   const pathname = usePathname()
   const reduce = useReducedMotion()
   const [collapsed, setCollapsed] = useState(false)
@@ -32,7 +34,7 @@ export function AppShell({ children }: AppShellProps) {
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-control focus:bg-accent-solid focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-on-accent focus:shadow-pop"
       >
-        Skip to content
+        {t('skipToContent')}
       </a>
 
       <Sidebar
@@ -86,7 +88,7 @@ export function AppShell({ children }: AppShellProps) {
             tabIndex={-1}
             role="dialog"
             aria-modal="true"
-            aria-label="Navigation menu"
+            aria-label={t('navigationMenu')}
             initial={reduce ? false : { x: '-100%' }}
             animate={{ x: 0 }}
             exit={reduce ? { opacity: 0 } : { x: '-100%' }}

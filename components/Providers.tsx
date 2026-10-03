@@ -25,6 +25,7 @@ import { SessionProvider, useSession } from 'next-auth/react'
 import { setDarkMode } from '@/features/preferences/preferencesSlice'
 import { makeStore, type AppStore } from '@/store'
 import { hydrateFromStorage, loadPersistedState } from '@/store/persistence'
+import LanguageSync from '@/lib/i18n/LanguageSync'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [store] = useState(makeStore)
@@ -33,6 +34,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <Provider store={store}>
         <SessionEffects store={store} />
+        <LanguageSync />
         {children}
       </Provider>
     </SessionProvider>

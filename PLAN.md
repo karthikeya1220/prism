@@ -476,6 +476,18 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
   full pass replacing hardcoded strings.
   *AC:* switcher changes all chrome + card labels; persists across reload;
   typecheck clean with typed resources. `feat:`
+  *Done 2026-10-03 (user directed Hindi, not German):* `en` + `hi` JSON in
+  `lib/locales/{en,hi}/*.json` (11 namespaces), typed resources
+  (`hi: typeof en` → compile-time key parity, `CustomTypeOptions` for strict
+  `t` keys), `lib/i18n/{index,T,LanguageSync}` (SSR always renders `en`;
+  post-hydration `changeLanguage` + `<html lang>` — no hydration mismatch;
+  `<T>` client islands for server pages), header `LanguageSwitcher` select +
+  Settings select, `language: 'en' | 'hi'` in preferences (persisted),
+  validation translator param (server/tests keep English defaults),
+  i18n-aware `timeAgo`/DnD announcements. Tests: `i18nResources` (key +
+  placeholder parity, switching) + `languageSwitch` integration; lint/
+  typecheck/186 tests/7 E2E green. Gaps: `metadata.title`, server landmark
+  names, API-passthrough messages, external data labels stay English.
 
 ---
 

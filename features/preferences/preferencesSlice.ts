@@ -15,7 +15,7 @@ export const DEFAULT_CATEGORIES: Category[] = ['technology', 'entertainment']
 export interface PreferencesState {
   categories: Category[]
   darkMode: boolean
-  language: 'en' | 'de'
+  language: 'en' | 'hi'
   /** First-run onboarding has been completed (chosen topics or skipped). */
   onboarded: boolean
   /**
@@ -58,7 +58,7 @@ const preferencesSlice = createSlice({
     setDarkMode(state, action: PayloadAction<boolean>) {
       state.darkMode = action.payload
     },
-    setLanguage(state, action: PayloadAction<'en' | 'de'>) {
+    setLanguage(state, action: PayloadAction<'en' | 'hi'>) {
       state.language = action.payload
     },
     /** Dismiss the first-run prompt permanently (picked topics or skipped). */

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { MAX_CATEGORIES, toggleCategory } from '@/features/preferences/preferencesSlice'
 import { CATEGORIES, type Category } from '@/types'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useTranslation } from '@/lib/i18n'
 import { cx } from '@/lib/cx'
 
 /**
@@ -12,9 +13,11 @@ import { cx } from '@/lib/cx'
  * with a clear (role="alert") message. State lives in the preferences slice,
  * so choices persist through localStorage (store/persistence.ts) and drive
  * feed queries (FeedSection passes them as RTK Query args). The counter is
- * polite-live so screen readers hear the cap.
+ * polite-live so screen readers hear the cap. Category labels come from the
+ * shared `common:categories` table (falls back through `fallbackNS`).
  */
 export function PreferencesForm() {
+  const { t } = useTranslation('settings')
   const categories = useAppSelector((state) => state.preferences.categories)
   const dispatch = useAppDispatch()
   const [blocked, setBlocked] = useState(false)
@@ -32,9 +35,7 @@ export function PreferencesForm() {
   return (
     <div className="rounded-card border border-line bg-surface p-5 shadow-card">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm text-ink-soft">
-          Pick up to {MAX_CATEGORIES} topics
-        </p>
+        <p className="text-sm text-ink-soft">{t('pickTopics', { max: MAX_CATEGORIES })}</p>
         <p
           aria-live="polite"
           className="font-mono text-xs text-ink-soft"
@@ -56,7 +57,7 @@ export function PreferencesForm() {
                     : 'border-line bg-canvas text-ink hover:border-accent hover:text-accent',
                 )}
               >
-                {category}
+                {t(`categories.${category}`)}
               </button>
             </li>
           )
@@ -68,12 +69,10 @@ export function PreferencesForm() {
         className="mt-3 text-xs"
       >
         {blocked ? (
-          <span className="text-danger">
-            Keep at least one topic selected — Prism always needs something to show you.
-          </span>
+          <span className="text-danger">{t('minOneTopic')}</span>
         ) : (
           <span className="text-ink-soft">
-            {atCap ? 'Topic limit reached — clear one to swap it.' : 'Saved automatically.'}
+            {atCap ? t('limitReached') : t('savedAutomatically')}
           </span>
         )}
       </p>

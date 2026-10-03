@@ -47,8 +47,8 @@ describe('preferencesSlice', () => {
   it('sets dark mode and language', () => {
     let state = reducer(initial, setDarkMode(true))
     expect(state.darkMode).toBe(true)
-    state = reducer(state, setLanguage('de'))
-    expect(state.language).toBe('de')
+    state = reducer(state, setLanguage('hi'))
+    expect(state.language).toBe('hi')
   })
 
   it('rehydrates wholesale and tolerates empty categories', () => {
@@ -78,7 +78,7 @@ describe('preferencesSlice', () => {
 
   it('resets preferences to defaults but keeps the onboarding flag', () => {
     let state = reducer(initial, setDarkMode(true))
-    state = reducer(state, setLanguage('de'))
+    state = reducer(state, setLanguage('hi'))
     state = reducer(state, toggleCategory('sports'))
     state = reducer(state, markOnboarded())
 

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import SearchView from '@/features/search/SearchView'
 import SearchResultsSkeleton from '@/features/search/SearchResultsSkeleton'
+import { T } from '@/lib/i18n/T'
 
 export const metadata: Metadata = { title: 'Search — Prism' }
 
@@ -15,9 +16,11 @@ export default function SearchPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1.5">
-        <h1 className="text-display font-semibold text-ink">Search</h1>
+        <h1 className="text-display font-semibold text-ink">
+          <T ns="pages" k="search.title" />
+        </h1>
         <p className="max-w-[60ch] text-ink-soft">
-          One query across news, films, and social posts — grouped by source.
+          <T ns="pages" k="search.subtitle" />
         </p>
       </header>
       <Suspense fallback={<SearchResultsSkeleton />}>

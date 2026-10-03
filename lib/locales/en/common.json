@@ -1,0 +1,37 @@
+{
+  "tryAgain": "Try again",
+  "undo": "Undo",
+  "dismissNotification": "Dismiss notification",
+  "error": {
+    "title": "Prism could not reach the content services",
+    "hint": "The connection may be flaky — try again, and your saved topics and favorites stay untouched."
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{n}}m ago",
+    "hoursAgo": "{{n}}h ago",
+    "daysAgo": "{{n}}d ago"
+  },
+  "categories": {
+    "all": "all",
+    "technology": "technology",
+    "business": "business",
+    "finance": "finance",
+    "sports": "sports",
+    "entertainment": "entertainment",
+    "science": "science",
+    "health": "health",
+    "general": "general"
+  },
+  "dnd": {
+    "card": "card",
+    "instructions": "Space to pick up the card. Arrow keys to move it. Space to drop. Escape to cancel.",
+    "pickedUp": "Picked up card {{title}}, position {{n}} of {{total}}.",
+    "movedOver": "Card {{title}} moved over position {{n}}.",
+    "dropped": "Card {{title}} dropped at position {{n}} of {{total}}.",
+    "returned": "Card {{title}} returned to position {{n}}.",
+    "cancelled": "Dragging cancelled. Card {{title}} returned to position {{n}}."
+  },
+  "resetOrder": "Reset order",
+  "reorder": "Reorder {{title}}"
+}

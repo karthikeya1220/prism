@@ -8,6 +8,7 @@ import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass, cardTitleClass } from './cardStyles'
 import { Highlight } from '@/components/ui/Highlight'
 import { timeAgo } from '@/lib/format'
+import { useTranslation } from '@/lib/i18n'
 
 export interface NewsCardProps {
   item: NewsItem
@@ -19,6 +20,7 @@ export interface NewsCardProps {
 
 /** News variant of the content card: source/category meta + "Read More". */
 export function NewsCard({ item, isFavorite, onToggleFavorite, highlight = '' }: NewsCardProps) {
+  const { t } = useTranslation('cards')
   const reduce = useReducedMotion()
   return (
     <motion.article
@@ -29,7 +31,7 @@ export function NewsCard({ item, isFavorite, onToggleFavorite, highlight = '' }:
       <CardImage src={item.imageUrl} fallback={<Newspaper size={28} />} />
       <div className={cardBodyClass}>
         <p className={cardMetaClass}>
-          {item.source} · {item.category} · {timeAgo(item.publishedAt)}
+          {item.source} · {t(`categories.${item.category}`)} · {timeAgo(item.publishedAt)}
         </p>
         <h3 className={cardTitleClass}>
           <Highlight text={item.title} term={highlight} />
@@ -46,7 +48,7 @@ export function NewsCard({ item, isFavorite, onToggleFavorite, highlight = '' }:
             rel="noreferrer"
             className={cardCtaClass}
           >
-            Read More
+            {t('readMore')}
             <ArrowUpRight size={15} aria-hidden="true" />
           </a>
           <FavoriteButton

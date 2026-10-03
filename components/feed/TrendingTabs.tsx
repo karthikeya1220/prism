@@ -3,6 +3,7 @@
 import { useRef, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { CATEGORIES, type Category } from '@/types'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 export type TrendingTab = 'all' | Category
 
@@ -21,6 +22,7 @@ export interface TrendingTabsProps {
  * TrendingView.
  */
 export function TrendingTabs({ value, onChange }: TrendingTabsProps) {
+  const { t } = useTranslation('trending')
   const listRef = useRef<HTMLDivElement>(null)
 
   const move = (next: TrendingTab) => {
@@ -47,7 +49,7 @@ export function TrendingTabs({ value, onChange }: TrendingTabsProps) {
     <div
       ref={listRef}
       role="tablist"
-      aria-label="Trending categories"
+      aria-label={t('tabsLabel')}
       onKeyDown={onKeyDown}
       className="flex flex-wrap gap-2"
     >
@@ -70,7 +72,7 @@ export function TrendingTabs({ value, onChange }: TrendingTabsProps) {
                 : 'border-line bg-surface text-ink-soft hover:border-accent hover:text-accent',
             )}
           >
-            {tab}
+            {t(`categories.${tab}`)}
           </button>
         )
       })}

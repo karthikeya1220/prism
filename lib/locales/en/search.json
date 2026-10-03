@@ -1,0 +1,34 @@
+{
+  "label": "Search news, movies, and posts",
+  "placeholder": "Search news, movies, posts…",
+  "clear": "Clear search",
+  "hint": "Press Enter to search now. Results update automatically after a short pause. Press Escape to clear.",
+  "regionLabel": "Search results",
+  "loading": "Loading search results",
+  "minCharsTitle": "Type at least two characters",
+  "minCharsHint": "Shorter queries are too noisy to search across news, films, and posts.",
+  "errorTitle": "Search is unavailable right now",
+  "errorHint": "The search service did not answer. Your saved topics and favorites are untouched.",
+  "noResultsTitle": "No results for “{{term}}”",
+  "noResultsHint": "Try a shorter or different phrasing — a suggestion might hit.",
+  "partialSources": "Some sources could not be searched ({{sources}}). Results from the others are shown; ",
+  "retry": "retry",
+  "sourceNames": {
+    "news": "news",
+    "movies": "movies",
+    "social": "social posts"
+  },
+  "filterLabel": "Filter search results by type",
+  "filters": {
+    "all": "All",
+    "news": "News",
+    "movie": "Movies",
+    "social": "Social"
+  },
+  "updatingAria": "Updating results",
+  "updating": "Updating…",
+  "groupResults": "{{label}} results",
+  "resultOne": "{{n}} result",
+  "resultMany": "{{n}} results",
+  "noMatch": "No {{type}} matched “{{term}}”."
+}

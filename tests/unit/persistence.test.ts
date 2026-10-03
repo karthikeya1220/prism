@@ -26,7 +26,7 @@ const news: NewsItem = {
 
 const validPayload = () => ({
   version: 1,
-  preferences: { categories: ['finance'], darkMode: true, language: 'de' },
+  preferences: { categories: ['finance'], darkMode: true, language: 'hi' },
   favorites: { byId: { 'news:1': news }, ids: ['news:1'] },
   layout: { manualOrder: { feed: ['social:2'], favorites: [], trending: [] } },
 })
@@ -156,7 +156,7 @@ describe('persistence', () => {
     // …then the persisted state is applied in the mount effect.
     expect(persisted?.preferences?.darkMode).toBe(true)
     expect(store.getState().preferences.darkMode).toBe(true)
-    expect(store.getState().preferences.language).toBe('de')
+    expect(store.getState().preferences.language).toBe('hi')
     expect(store.getState().favorites.ids).toEqual(['news:1'])
     expect(store.getState().layout.manualOrder.feed).toEqual(['social:2'])
 

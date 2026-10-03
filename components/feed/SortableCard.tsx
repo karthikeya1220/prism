@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import type { ContentItem } from '@/types'
 import { renderCard } from '@/components/feed/renderCard'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SortableCardProps {
   item: ContentItem
@@ -27,6 +28,7 @@ export function SortableCard({
   onToggleFavorite,
   indicator = null,
 }: SortableCardProps) {
+  const { t } = useTranslation('common')
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id })
 
@@ -50,7 +52,7 @@ export function SortableCard({
         <button
           ref={setActivatorNodeRef}
           type="button"
-          aria-label={`Reorder ${item.title}`}
+          aria-label={t('reorder', { title: item.title })}
           {...attributes}
           {...listeners}
           className="absolute right-2 top-2 z-10 cursor-grab touch-none rounded-control border border-line/70 bg-surface/90 p-1.5 text-ink-soft shadow-card backdrop-blur-sm transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:cursor-grabbing"

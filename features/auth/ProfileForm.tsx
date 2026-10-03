@@ -4,8 +4,9 @@ import { useState, type FormEvent } from 'react'
 import { useSession } from 'next-auth/react'
 import { Field } from './Field'
 import { AVATAR_PRESETS } from '@/lib/auth/avatars'
-import { validateName } from '@/lib/auth/validation'
+import { validateName, type ValidationT } from '@/lib/auth/validation'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 interface Draft {
   name: string
@@ -20,6 +21,9 @@ interface Draft {
  * account switches always come with a full navigation, so no reset logic.
  */
 export function ProfileForm() {
+  const { t } = useTranslation('auth')
+  /** Routes raw validation keys through the auth namespace. */
+  const vt: ValidationT = (key, vars) => t(`errors.${key}`, vars)
   const { data: session, update } = useSession()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
@@ -32,7 +36,7 @@ export function ProfileForm() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
-    const error = validateName(effective.name)
+    const error = validateName(effective.name, vt)
     setNameError(error)
     setFormError(null)
     setSaved(false)
@@ -49,14 +53,14 @@ export function ProfileForm() {
         const body = (await response.json().catch(() => null)) as
           | { error?: { message?: string } }
           | null
-        setFormError(body?.error?.message ?? 'Could not save your profile.')
+        setFormError(body?.error?.message ?? t('profileSaveFailed'))
         return
       }
       setDraft(null)
       await update()
       setSaved(true)
     } catch {
-      setFormError('Something went wrong. Please try again.')
+      setFormError(t('genericError'))
     } finally {
       setPending(false)
     }
@@ -70,11 +74,11 @@ export function ProfileForm() {
         </p>
       )}
       <div aria-live="polite" className="min-h-0">
-        {saved && <p className="text-sm text-accent">Profile saved.</p>}
+        {saved && <p className="text-sm text-accent">{t('profileSaved')}</p>}
       </div>
       <Field
         id="profile-name"
-        label="Display name"
+        label={t('displayName')}
         value={effective.name}
         onChange={(name) => {
           setSaved(false)
@@ -85,7 +89,7 @@ export function ProfileForm() {
         required
       />
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink">Avatar</legend>
+        <legend className="mb-2 text-sm font-medium text-ink">{t('avatar')}</legend>
         <div className="flex flex-wrap gap-2">
           {AVATAR_PRESETS.map((preset) => (
             <label
@@ -110,21 +114,18 @@ export function ProfileForm() {
                 className="sr-only"
               />
               <span aria-hidden="true">{preset}</span>
-              <span className="sr-only">Avatar {preset}</span>
+              <span className="sr-only">{t('avatarPreset', { preset })}</span>
             </label>
           ))}
         </div>
       </fieldset>
-      <p className="text-xs text-ink-soft">
-        Signed in as {user?.email}. Topics, favorites, and layout are saved per
-        account on this device.
-      </p>
+      <p className="text-xs text-ink-soft">{t('signedInAs', { email: user?.email ?? '' })}</p>
       <button
         type="submit"
         disabled={pending || !user}
         className="rounded-control bg-accent-solid px-5 py-2.5 text-sm font-medium text-on-accent transition-opacity hover:opacity-90 disabled:opacity-60"
       >
-        {pending ? 'Saving…' : 'Save profile'}
+        {pending ? t('savingProfile') : t('saveProfile')}
       </button>
     </form>
   )

@@ -6,6 +6,7 @@ import { Sparkles } from 'lucide-react'
 import PreferencesForm from './PreferencesForm'
 import { markOnboarded } from './preferencesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useTranslation } from '@/lib/i18n'
 
 /**
  * First-run onboarding prompt (M5): a modal dialog asking the user to pick
@@ -17,6 +18,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks'
  * was focused before it opened. Motion respects prefers-reduced-motion.
  */
 export function OnboardingDialog() {
+  const { t } = useTranslation('onboarding')
   const hydrated = useAppSelector((state) => state.preferences.hydrated)
   const onboarded = useAppSelector((state) => state.preferences.onboarded)
   const dispatch = useAppDispatch()
@@ -100,13 +102,9 @@ export function OnboardingDialog() {
               <Sparkles size={20} />
             </span>
             <h2 id="onboarding-title" className="mt-4 text-title font-semibold text-ink">
-              Make Prism yours
+              {t('title')}
             </h2>
-            <p className="mt-1 text-sm text-ink-soft">
-              Pick the topics you care about. Your feed, trending, and
-              recommendations all follow these choices — change them any time
-              in Settings.
-            </p>
+            <p className="mt-1 text-sm text-ink-soft">{t('body')}</p>
             <div className="mt-4">
               <PreferencesForm />
             </div>
@@ -116,14 +114,14 @@ export function OnboardingDialog() {
                 onClick={dismiss}
                 className="rounded-control bg-accent-solid px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
               >
-                Start reading
+                {t('startReading')}
               </button>
               <button
                 type="button"
                 onClick={dismiss}
                 className="rounded-control border border-line px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:text-ink"
               >
-                Skip for now
+                {t('skipForNow')}
               </button>
             </div>
           </motion.div>

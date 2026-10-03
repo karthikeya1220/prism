@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import FavoritesView from '@/features/favorites/FavoritesView'
+import { T } from '@/lib/i18n/T'
 
 export const metadata: Metadata = { title: 'Favorites — Prism' }
 
@@ -8,9 +9,11 @@ export default function FavoritesPage() {
   return (
     <div className="space-y-8">
       <header className="space-y-1.5">
-        <h1 className="text-display font-semibold text-ink">Favorites</h1>
+        <h1 className="text-display font-semibold text-ink">
+          <T ns="pages" k="favorites.title" />
+        </h1>
         <p className="max-w-[60ch] text-ink-soft">
-          Everything you kept, saved on this device and ready to revisit.
+          <T ns="pages" k="favorites.subtitle" />
         </p>
       </header>
       <FavoritesView />

@@ -1,0 +1,17 @@
+{
+  "filters": {
+    "all": "All",
+    "news": "News",
+    "movie": "Movies",
+    "social": "Social"
+  },
+  "filterLabel": "Filter favorites by type",
+  "emptyTitle": "No favorites yet",
+  "emptyHint": "Tap the heart on any card to keep it here — favorites stay put even when you are offline.",
+  "browseFeed": "Browse your feed",
+  "groupFavorites": "{{label}} favorites",
+  "savedCount": "{{n}} saved",
+  "emptyGroupTitle": "No saved {{type}}",
+  "emptyGroupHint": "Switch the filter or heart a card of this type from your feed.",
+  "removed": "Removed “{{title}}”"
+}

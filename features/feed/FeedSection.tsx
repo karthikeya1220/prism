@@ -13,6 +13,7 @@ import { useGetMoviesQuery, useGetNewsQuery, useGetSocialQuery } from '@/feature
 import { toggleFavorite } from '@/features/favorites/favoritesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import type { ContentItem } from '@/types'
+import { useTranslation } from '@/lib/i18n'
 
 /**
  * Personalized unified feed (R6): three parallel RTK Query subscriptions
@@ -22,6 +23,7 @@ import type { ContentItem } from '@/types'
  * drag-and-drop manual order (M8, via useFeedOrder).
  */
 export function FeedSection() {
+  const { t } = useTranslation('feed')
   const hydrated = useAppSelector((state) => state.preferences.hydrated)
   const categories = useAppSelector((state) => state.preferences.categories)
   const favorites = useAppSelector((state) => state.favorites.byId)
@@ -90,7 +92,7 @@ export function FeedSection() {
       {!hydrated || (firstLoad && items.length === 0) ? (
         <div
           role="status"
-          aria-label="Loading your feed"
+          aria-label={t('loading')}
           className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         >
           {Array.from({ length: 6 }, (_, index) => (
@@ -100,8 +102,8 @@ export function FeedSection() {
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Newspaper size={20} aria-hidden="true" />}
-          title="Nothing matches your topics yet"
-          hint="Widen your topics in Settings — more stories, films, and posts will land here."
+          title={t('emptyTitle')}
+          hint={t('emptyHint')}
         />
       ) : (
         <>
@@ -110,21 +112,19 @@ export function FeedSection() {
               role="alert"
               className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/40 bg-danger/5 px-4 py-3"
             >
-              <p className="text-sm text-danger">
-                Some sections couldn&apos;t load — your feed may be incomplete.
-              </p>
+              <p className="text-sm text-danger">{t('partialError')}</p>
               <button
                 type="button"
                 onClick={retry}
                 className="rounded-control border border-danger/40 px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
               >
-                Try again
+                {t('tryAgain')}
               </button>
             </div>
           )}
           <SortableFeedGrid
             items={orderedItems}
-            label="Your feed"
+            label={t('gridLabel')}
             isFavorite={(id) => id in favorites}
             onToggleFavorite={toggle}
             onReorder={reorder}
@@ -136,7 +136,7 @@ export function FeedSection() {
 
       {fetching && items.length > 0 && (
         <p role="status" className="pt-2 text-center text-sm text-ink-soft">
-          Loading more…
+          {t('loadingMore')}
         </p>
       )}
       <div ref={sentinelRef} aria-hidden="true" className="h-px" />

@@ -1,0 +1,27 @@
+{
+  "feed": "Feed",
+  "trending": "Trending",
+  "favorites": "Favorites",
+  "settings": "Settings",
+  "profile": "Profile",
+  "signOut": "Sign out",
+  "openMenu": "Open navigation menu",
+  "closeMenu": "Close navigation menu",
+  "primaryNav": "Primary",
+  "expandSidebar": "Expand sidebar",
+  "collapseSidebar": "Collapse sidebar",
+  "collapse": "Collapse",
+  "skipToContent": "Skip to content",
+  "navigationMenu": "Navigation menu",
+  "brandHome": "Prism — go to feed",
+  "language": "Language",
+  "theme": {
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme"
+  },
+  "account": {
+    "fallback": "Account",
+    "menuFor": "Account menu for {{name}}",
+    "label": "Account"
+  }
+}

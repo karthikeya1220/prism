@@ -1,0 +1,15 @@
+{
+  "appearance": "Appearance",
+  "darkMode": "Dark mode",
+  "darkModeHint": "Prism follows your system setting until you choose.",
+  "language": "Language",
+  "interfaceLanguage": "Interface language",
+  "languageHint": "Applies right away — Prism remembers your choice across reloads.",
+  "resetHeading": "Reset preferences",
+  "resetCopy": "Restore default topics, appearance, and language. Your favorites stay saved.",
+  "resetButton": "Reset to defaults",
+  "pickTopics": "Pick up to {{max}} topics",
+  "minOneTopic": "Keep at least one topic selected — Prism always needs something to show you.",
+  "limitReached": "Topic limit reached — clear one to swap it.",
+  "savedAutomatically": "Saved automatically."
+}

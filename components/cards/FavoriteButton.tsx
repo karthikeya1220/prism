@@ -2,6 +2,7 @@
 
 import { Heart } from 'lucide-react'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 export interface FavoriteButtonProps {
   /** Accessible content title, used to build the button label. */
@@ -17,11 +18,12 @@ export interface FavoriteButtonProps {
  * always announce what a press will do.
  */
 export function FavoriteButton({ title, pressed, onToggle }: FavoriteButtonProps) {
+  const { t } = useTranslation('cards')
   return (
     <button
       type="button"
       onClick={onToggle}
-      aria-label={pressed ? `Remove ${title} from favorites` : `Add ${title} to favorites`}
+      aria-label={pressed ? t('favorite.remove', { title }) : t('favorite.add', { title })}
       className={cx(
         'grid h-9 w-9 shrink-0 place-items-center rounded-control transition-colors hover:bg-line/60',
         pressed ? 'text-danger' : 'text-ink-soft hover:text-ink',

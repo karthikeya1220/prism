@@ -5,19 +5,21 @@ import type { LucideIcon } from 'lucide-react'
 import Brand from './Brand'
 import NavLink from './NavLink'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 interface NavItem {
   href: string
-  label: string
+  /** i18n key inside the `nav` namespace (labels translate at render). */
+  key: 'feed' | 'trending' | 'favorites' | 'settings'
   icon: LucideIcon
 }
 
 /** Destinations shown in both the desktop rail and the mobile drawer. */
 const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Feed', icon: Newspaper },
-  { href: '/trending', label: 'Trending', icon: Flame },
-  { href: '/favorites', label: 'Favorites', icon: Heart },
-  { href: '/settings', label: 'Settings', icon: SlidersHorizontal },
+  { href: '/', key: 'feed', icon: Newspaper },
+  { href: '/trending', key: 'trending', icon: Flame },
+  { href: '/favorites', key: 'favorites', icon: Heart },
+  { href: '/settings', key: 'settings', icon: SlidersHorizontal },
 ]
 
 export interface SidebarProps {
@@ -48,13 +50,14 @@ export function Sidebar({
   onNavigate,
   onClose,
 }: SidebarProps) {
+  const { t } = useTranslation('nav')
   const links = (
     <ul className="space-y-1">
       {NAV_ITEMS.map((item) => (
         <li key={item.href}>
           <NavLink
             href={item.href}
-            label={item.label}
+            label={t(item.key)}
             icon={item.icon}
             isActive={activePath === item.href}
             collapsed={variant === 'rail' && collapsed}
@@ -73,13 +76,13 @@ export function Sidebar({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close navigation menu"
+            aria-label={t('closeMenu')}
             className="grid h-9 w-9 place-items-center rounded-control text-sidebar-ink-soft transition-colors hover:bg-sidebar-active hover:text-white"
           >
             <X size={20} aria-hidden="true" />
           </button>
         </div>
-        <nav aria-label="Primary" className="flex-1 overflow-y-auto p-3">
+        <nav aria-label={t('primaryNav')} className="flex-1 overflow-y-auto p-3">
           {links}
         </nav>
       </div>
@@ -95,7 +98,7 @@ export function Sidebar({
       <div className="flex items-center justify-between gap-2 px-4 py-4">
         <Brand showName={!collapsed} />
       </div>
-      <nav aria-label="Primary" className="flex-1 overflow-y-auto px-3 py-2">
+      <nav aria-label={t('primaryNav')} className="flex-1 overflow-y-auto px-3 py-2">
         {links}
       </nav>
       {onToggleCollapse && (
@@ -104,7 +107,7 @@ export function Sidebar({
             type="button"
             onClick={onToggleCollapse}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
             className="flex w-full items-center gap-3 rounded-control px-3 py-2 text-sm text-sidebar-ink-soft transition-colors hover:bg-sidebar-active hover:text-white"
           >
             {collapsed ? (
@@ -112,7 +115,7 @@ export function Sidebar({
             ) : (
               <PanelLeftClose size={18} aria-hidden="true" className="shrink-0" />
             )}
-            <span className={cx(collapsed && 'sr-only')}>Collapse</span>
+            <span className={cx(collapsed && 'sr-only')}>{t('collapse')}</span>
           </button>
         </div>
       )}

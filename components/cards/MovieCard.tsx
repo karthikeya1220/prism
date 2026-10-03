@@ -8,6 +8,7 @@ import FavoriteButton from './FavoriteButton'
 import { cardBodyClass, cardClass, cardCtaClass, cardMetaClass, cardTextClass, cardTitleClass } from './cardStyles'
 import { Highlight } from '@/components/ui/Highlight'
 import { formatRating, releaseYear } from '@/lib/format'
+import { useTranslation } from '@/lib/i18n'
 
 export interface MovieCardProps {
   item: MovieItem
@@ -19,6 +20,7 @@ export interface MovieCardProps {
 
 /** Movie variant of the content card: rating badge + "Play Now" CTA. */
 export function MovieCard({ item, isFavorite, onToggleFavorite, highlight = '' }: MovieCardProps) {
+  const { t } = useTranslation('cards')
   const reduce = useReducedMotion()
   return (
     <motion.article
@@ -33,7 +35,7 @@ export function MovieCard({ item, isFavorite, onToggleFavorite, highlight = '' }
       </span>
       <div className={cardBodyClass}>
         <p className={cardMetaClass}>
-          {releaseYear(item.releaseDate) || 'Upcoming'}
+          {releaseYear(item.releaseDate) || t('upcoming')}
           {item.genres.length > 0 && ` · ${item.genres.slice(0, 2).join(', ')}`}
         </p>
         <h3 className={cardTitleClass}>
@@ -51,7 +53,7 @@ export function MovieCard({ item, isFavorite, onToggleFavorite, highlight = '' }
             rel="noreferrer"
             className={cardCtaClass}
           >
-            Play Now
+            {t('playNow')}
             <ArrowUpRight size={15} aria-hidden="true" />
           </a>
           <FavoriteButton

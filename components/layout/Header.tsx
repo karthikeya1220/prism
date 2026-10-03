@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { Menu, Settings } from 'lucide-react'
 import AccountMenu from './AccountMenu'
 import Brand from './Brand'
+import LanguageSwitcher from './LanguageSwitcher'
 import { SearchBarWithFallback as SearchBar } from './SearchBar'
 import ThemeToggle from './ThemeToggle'
 import { cx } from '@/lib/cx'
 import { iconButtonClass } from '@/components/ui/icon-button'
+import { useTranslation } from '@/lib/i18n'
 
 export interface HeaderProps {
   /** Current pathname; highlights the settings action when it matches. */
@@ -20,11 +22,12 @@ export interface HeaderProps {
 }
 
 /**
- * Sticky command bar: navigation trigger + brand (mobile), search, theme,
- * settings, and the account menu. Blurs the canvas slightly so scrolled
- * content passes underneath without colliding.
+ * Sticky command bar: navigation trigger + brand (mobile), search, language,
+ * theme, settings, and the account menu. Blurs the canvas slightly so
+ * scrolled content passes underneath without colliding.
  */
 export function Header({ activePath, onOpenMenu, menuButtonRef }: HeaderProps) {
+  const { t } = useTranslation('nav')
   const settingsActive = activePath === '/settings'
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-md">
@@ -33,7 +36,7 @@ export function Header({ activePath, onOpenMenu, menuButtonRef }: HeaderProps) {
           ref={menuButtonRef}
           type="button"
           onClick={onOpenMenu}
-          aria-label="Open navigation menu"
+          aria-label={t('openMenu')}
           className={cx(iconButtonClass, 'lg:hidden')}
         >
           <Menu size={20} aria-hidden="true" />
@@ -47,10 +50,11 @@ export function Header({ activePath, onOpenMenu, menuButtonRef }: HeaderProps) {
         <SearchBar className="min-w-0 flex-1 sm:max-w-md" />
 
         <div className="ml-auto flex items-center gap-1.5">
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link
             href="/settings"
-            aria-label="Settings"
+            aria-label={t('settings')}
             aria-current={settingsActive ? 'page' : undefined}
             className={cx(
               iconButtonClass,

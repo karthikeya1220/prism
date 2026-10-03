@@ -10,6 +10,7 @@ import { toggleFavorite } from '@/features/favorites/favoritesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { isMovieItem, isNewsItem, isSocialItem, type ContentItem } from '@/types'
 import { cx } from '@/lib/cx'
+import { useTranslation } from '@/lib/i18n'
 
 export interface SearchResultsProps {
   /** The active search term (already trimmed by the URL sync). */
@@ -17,13 +18,6 @@ export interface SearchResultsProps {
 }
 
 type Filter = 'all' | 'news' | 'movie' | 'social'
-
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'news', label: 'News' },
-  { key: 'movie', label: 'Movies' },
-  { key: 'social', label: 'Social' },
-]
 
 /** Deterministic, non-preachy suggestions for the no-results state. */
 function suggestionsFor(query: string): string[] {
@@ -46,6 +40,7 @@ function suggestionsFor(query: string): string[] {
  * rows, and loading skeletons — every data-driven state covered (rule 4).
  */
 export function SearchResults({ query }: SearchResultsProps) {
+  const { t } = useTranslation('search')
   const term = query.trim()
   const dispatch = useAppDispatch()
   const favorites = useAppSelector((state) => state.favorites.byId)
@@ -62,27 +57,52 @@ export function SearchResults({ query }: SearchResultsProps) {
   )
   const isFavorite = useCallback((id: string) => id in favorites, [favorites])
 
+  // Filter tabs and group labels are built here (not at module scope) so a
+  // language change re-renders them.
+  const filters: { key: Filter; label: string }[] = [
+    { key: 'all', label: t('filters.all') },
+    { key: 'news', label: t('filters.news') },
+    { key: 'movie', label: t('filters.movie') },
+    { key: 'social', label: t('filters.social') },
+  ]
+
   const groups = useMemo(
     () => [
-      { key: 'news' as const, label: 'News', items: data?.news.items.filter(isNewsItem) ?? [] },
-      { key: 'movie' as const, label: 'Movies', items: data?.movies.items.filter(isMovieItem) ?? [] },
-      { key: 'social' as const, label: 'Social', items: data?.social.items.filter(isSocialItem) ?? [] },
+      {
+        key: 'news' as const,
+        label: t('filters.news'),
+        items: data?.news.items.filter(isNewsItem) ?? [],
+      },
+      {
+        key: 'movie' as const,
+        label: t('filters.movie'),
+        items: data?.movies.items.filter(isMovieItem) ?? [],
+      },
+      {
+        key: 'social' as const,
+        label: t('filters.social'),
+        items: data?.social.items.filter(isSocialItem) ?? [],
+      },
     ],
-    [data],
+    [data, t],
   )
 
   if (term.length < 2) {
     return (
       <EmptyState
-        title="Type at least two characters"
-        hint="Shorter queries are too noisy to search across news, films, and posts."
+        title={t('minCharsTitle')}
+        hint={t('minCharsHint')}
       />
     )
   }
 
   if (isLoading) {
     return (
-      <div role="status" aria-label="Loading search results" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div
+        role="status"
+        aria-label={t('loading')}
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+      >
         {Array.from({ length: 6 }, (_, index) => (
           <CardSkeleton key={index} />
         ))}
@@ -94,15 +114,15 @@ export function SearchResults({ query }: SearchResultsProps) {
     return (
       <EmptyState
         icon={<SearchX size={20} aria-hidden="true" />}
-        title="Search is unavailable right now"
-        hint="The search service did not answer. Your saved topics and favorites are untouched."
+        title={t('errorTitle')}
+        hint={t('errorHint')}
         action={
           <button
             type="button"
             onClick={() => refetch()}
             className="inline-flex items-center gap-2 rounded-control bg-accent-solid px-4 py-2 text-sm font-medium text-on-accent transition-opacity hover:opacity-90"
           >
-            Try again
+            {t('tryAgain')}
           </button>
         }
       />
@@ -118,8 +138,8 @@ export function SearchResults({ query }: SearchResultsProps) {
     return (
       <EmptyState
         icon={<SearchX size={20} aria-hidden="true" />}
-        title={`No results for “${term}”`}
-        hint="Try a shorter or different phrasing — a suggestion might hit."
+        title={t('noResultsTitle', { term })}
+        hint={t('noResultsHint')}
         action={
           <div className="flex flex-wrap justify-center gap-2">
             {suggestionsFor(term).map((suggestion) => (
@@ -138,9 +158,9 @@ export function SearchResults({ query }: SearchResultsProps) {
   }
 
   const failedSources = [
-    data?.news.failed && 'news',
-    data?.movies.failed && 'movies',
-    data?.social.failed && 'social posts',
+    data?.news.failed && t('sourceNames.news'),
+    data?.movies.failed && t('sourceNames.movies'),
+    data?.social.failed && t('sourceNames.social'),
   ].filter(Boolean) as string[]
   const visibleGroups = groups.filter((group) => filter === 'all' || group.key === filter)
 
@@ -148,16 +168,20 @@ export function SearchResults({ query }: SearchResultsProps) {
     <div className="space-y-6">
       {failedSources.length > 0 && (
         <p role="status" className="rounded-control border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-ink">
-          {`Some sources could not be searched (${failedSources.join(', ')}). Results from the others are shown; `}
+          {t('partialSources', { sources: failedSources.join(', ') })}
           <button type="button" onClick={() => refetch()} className="font-semibold underline underline-offset-2">
-            retry
+            {t('retry')}
           </button>
           .
         </p>
       )}
 
-      <div role="group" aria-label="Filter search results by type" className="flex flex-wrap items-center gap-2">
-        {FILTERS.map((option) => {
+      <div
+        role="group"
+        aria-label={t('filterLabel')}
+        className="flex flex-wrap items-center gap-2"
+      >
+        {filters.map((option) => {
           const count =
             option.key === 'all'
               ? total
@@ -181,28 +205,38 @@ export function SearchResults({ query }: SearchResultsProps) {
           )
         })}
         {isFetching && (
-          <span role="status" aria-label="Updating results" className="text-sm text-ink-soft">
-            Updating…
+          <span
+            role="status"
+            aria-label={t('updatingAria')}
+            className="text-sm text-ink-soft"
+          >
+            {t('updating')}
           </span>
         )}
       </div>
 
       {visibleGroups.map((group) => (
-        <section key={group.key} aria-label={`${group.label} results`} className="space-y-4">
+        <section
+          key={group.key}
+          aria-label={t('groupResults', { label: group.label })}
+          className="space-y-4"
+        >
           <h2 className="text-title font-semibold text-ink">
             {group.label}
             <span className="ml-2 text-sm font-normal text-ink-soft">
-              {group.items.length} result{group.items.length === 1 ? '' : 's'}
+              {group.items.length === 1
+                ? t('resultOne', { n: group.items.length })
+                : t('resultMany', { n: group.items.length })}
             </span>
           </h2>
           {group.items.length === 0 ? (
             <p className="text-sm text-ink-soft">
-              No {group.label.toLowerCase()} matched “{term}”.
+              {t('noMatch', { type: group.label.toLowerCase(), term })}
             </p>
           ) : (
             <ContentGrid
               items={group.items}
-              label={`${group.label} results`}
+              label={t('groupResults', { label: group.label })}
               isFavorite={isFavorite}
               onToggleFavorite={toggle}
               highlight={term}

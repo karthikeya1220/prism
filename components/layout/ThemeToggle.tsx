@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Moon, Sun } from 'lucide-react'
 import { setDarkMode } from '@/features/preferences/preferencesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useTranslation } from '@/lib/i18n'
 import { cx } from '@/lib/cx'
 import { iconButtonClass } from '@/components/ui/icon-button'
 
@@ -18,6 +19,7 @@ export interface ThemeToggleProps {
  * mode and swaps with a short rotation (instant under reduced motion).
  */
 export function ThemeToggle({ className }: ThemeToggleProps) {
+  const { t } = useTranslation('nav')
   const dark = useAppSelector((state) => state.preferences.darkMode)
   const dispatch = useAppDispatch()
   const reduce = useReducedMotion()
@@ -26,7 +28,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     <button
       type="button"
       onClick={() => dispatch(setDarkMode(!dark))}
-      aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={dark ? t('theme.toLight') : t('theme.toDark')}
       className={cx(iconButtonClass, className)}
     >
       <AnimatePresence mode="wait" initial={false}>

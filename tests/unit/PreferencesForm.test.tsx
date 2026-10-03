@@ -6,7 +6,11 @@ import PreferencesForm from '@/features/preferences/PreferencesForm'
 import { MAX_CATEGORIES } from '@/features/preferences/preferencesSlice'
 
 describe('PreferencesForm', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    // Persistence writes are debounced (250 ms): drain any write still
+    // scheduled by the previous test, then clear so this test's Providers
+    // hydrate from slice defaults (technology + entertainment).
+    await new Promise((resolve) => setTimeout(resolve, 300))
     window.localStorage.clear()
   })
 

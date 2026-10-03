@@ -1,0 +1,27 @@
+{
+  "feed": "फ़ीड",
+  "trending": "ट्रेंडिंग",
+  "favorites": "पसंदीदा",
+  "settings": "सेटिंग्स",
+  "profile": "प्रोफ़ाइल",
+  "signOut": "साइन आउट",
+  "openMenu": "नेविगेशन मेनू खोलें",
+  "closeMenu": "नेविगेशन मेनू बंद करें",
+  "primaryNav": "प्राथमिक",
+  "expandSidebar": "साइडबार फैलाएँ",
+  "collapseSidebar": "साइडबार समेटें",
+  "collapse": "समेटें",
+  "skipToContent": "सामग्री पर जाएँ",
+  "navigationMenu": "नेविगेशन मेनू",
+  "brandHome": "Prism — फ़ीड पर जाएँ",
+  "language": "भाषा",
+  "theme": {
+    "toLight": "हल्की थीम चुनें",
+    "toDark": "गहरी थीम चुनें"
+  },
+  "account": {
+    "fallback": "खाता",
+    "menuFor": "{{name}} का खाता मेनू",
+    "label": "खाता"
+  }
+}

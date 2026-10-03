@@ -1,0 +1,11 @@
+{
+  "readMore": "Read More",
+  "playNow": "Play Now",
+  "viewPost": "View post",
+  "upcoming": "Upcoming",
+  "postBy": "post by @{{handle}}",
+  "favorite": {
+    "add": "Add {{title}} to favorites",
+    "remove": "Remove {{title}} from favorites"
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { Undo2, X } from 'lucide-react'
+import { useTranslation } from '@/lib/i18n'
 
 export interface ToastProps {
   /** Short confirmation line ("Removed “Headline”"). */
@@ -20,6 +21,7 @@ export interface ToastProps {
  * self-dismisses after `duration` (timer cleared on unmount).
  */
 export function Toast({ message, onUndo, onDismiss, duration = 6000 }: ToastProps) {
+  const { t } = useTranslation('common')
   useEffect(() => {
     const timer = setTimeout(onDismiss, duration)
     return () => clearTimeout(timer)
@@ -39,12 +41,12 @@ export function Toast({ message, onUndo, onDismiss, duration = 6000 }: ToastProp
           className="inline-flex shrink-0 items-center gap-1.5 rounded px-2 py-1 font-semibold text-white underline decoration-white/40 underline-offset-2 transition hover:decoration-white"
         >
           <Undo2 size={14} aria-hidden="true" />
-          Undo
+          {t('undo')}
         </button>
         <button
           type="button"
           onClick={onDismiss}
-          aria-label="Dismiss notification"
+          aria-label={t('dismissNotification')}
           className="grid h-7 w-7 shrink-0 place-items-center rounded text-white/70 transition hover:bg-white/10 hover:text-white"
         >
           <X size={15} aria-hidden="true" />
