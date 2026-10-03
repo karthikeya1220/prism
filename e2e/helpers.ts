@@ -65,3 +65,20 @@ export async function dismissOnboarding(page: Page): Promise<void> {
       }),
   )
 }
+
+/**
+ * Store writes are debounced 250 ms (store/persistence.ts); a reload racing
+ * the pending write silently reverts the change. Wait until some persisted
+ * `pcd:` payload contains `needle` first.
+ */
+export async function waitForPersist(page: Page, needle: string): Promise<void> {
+  await page.waitForFunction((n) => {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i)
+      if (key?.startsWith('pcd:') && (localStorage.getItem(key) ?? '').includes(n)) {
+        return true
+      }
+    }
+    return false
+  }, needle)
+}
