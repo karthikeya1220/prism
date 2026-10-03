@@ -5,6 +5,7 @@
  */
 import type { ContentPage, SocialItem } from '@/types'
 import { MOCK_SOCIAL } from '@/mocks/social'
+import { MAX_PAGE } from '../validate'
 
 /**
  * Query the social dataset.
@@ -41,7 +42,8 @@ export function fetchSocial(options: {
     page,
     pageSize,
     totalResults: filtered.length,
-    hasMore: start + items.length < filtered.length,
+    hasMore:
+      page < MAX_PAGE && start + items.length < filtered.length,
     source: 'live',
   }
 }

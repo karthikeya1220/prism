@@ -22,6 +22,7 @@ import type { ContentItem } from '@/types'
  * automatically on a fresh cache key.
  */
 export function FeedSection() {
+  const hydrated = useAppSelector((state) => state.preferences.hydrated)
   const categories = useAppSelector((state) => state.preferences.categories)
   const favorites = useAppSelector((state) => state.favorites.byId)
   const dispatch = useAppDispatch()
@@ -32,9 +33,12 @@ export function FeedSection() {
   const [pageByKey, setPageByKey] = useState<Record<string, number>>({})
   const page = pageByKey[categoriesKey] ?? 1
 
-  const news = useGetNewsQuery({ categories, page })
-  const movies = useGetMoviesQuery({ categories, page })
-  const social = useGetSocialQuery({ page })
+  // Skip until rehydration finishes: queries must run with the *persisted*
+  // topics, not the pre-hydration defaults (otherwise every visit fires a
+  // redundant first round of requests).
+  const news = useGetNewsQuery({ categories, page }, { skip: !hydrated })
+  const movies = useGetMoviesQuery({ categories, page }, { skip: !hydrated })
+  const social = useGetSocialQuery({ page }, { skip: !hydrated })
 
   const items = useMemo(
     () =>
@@ -58,6 +62,9 @@ export function FeedSection() {
       [categoriesKey]: (current[categoriesKey] ?? 1) + 1,
     }))
   }, [categoriesKey])
+  // `!anyError` keeps a persistently failing source from looping page requests
+  // (re-enabling re-observes and fires again); the banner below gives users
+  // the visible retry path that re-enables scrolling once a refetch succeeds.
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !fetching && !anyError)
 
   const retry = () => {
@@ -73,22 +80,26 @@ export function FeedSection() {
     [dispatch],
   )
 
+  const skeleton = (
+    <div
+      role="status"
+      aria-label="Loading your feed"
+      className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+    >
+      {Array.from({ length: 6 }, (_, index) => (
+        <CardSkeleton key={index} />
+      ))}
+    </div>
+  )
+
   if (anyError && items.length === 0) {
     return <ErrorState onRetry={retry} />
   }
 
   return (
     <div className="space-y-4">
-      {firstLoad && items.length === 0 ? (
-        <div
-          role="status"
-          aria-label="Loading your feed"
-          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          {Array.from({ length: 6 }, (_, index) => (
-            <CardSkeleton key={index} />
-          ))}
-        </div>
+      {!hydrated || (firstLoad && items.length === 0) ? (
+        skeleton
       ) : items.length === 0 ? (
         <EmptyState
           icon={<Newspaper size={20} aria-hidden="true" />}
@@ -96,12 +107,31 @@ export function FeedSection() {
           hint="Widen your topics in Settings — more stories, films, and posts will land here."
         />
       ) : (
-        <ContentGrid
-          items={items}
-          label="Your feed"
-          isFavorite={(id) => id in favorites}
-          onToggleFavorite={toggle}
-        />
+        <>
+          {anyError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-danger/40 bg-danger/5 px-4 py-3"
+            >
+              <p className="text-sm text-danger">
+                Some sections couldn&apos;t load — your feed may be incomplete.
+              </p>
+              <button
+                type="button"
+                onClick={retry}
+                className="rounded-control border border-danger/40 px-3 py-1.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+          <ContentGrid
+            items={items}
+            label="Your feed"
+            isFavorite={(id) => id in favorites}
+            onToggleFavorite={toggle}
+          />
+        </>
       )}
 
       {fetching && items.length > 0 && (

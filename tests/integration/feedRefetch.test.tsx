@@ -122,4 +122,33 @@ describe('feed', () => {
     await user.click(screen.getByRole('button', { name: /try again/i }))
     await screen.findByText('Tech story one')
   })
+
+  it('keeps healthy content and banners when only one source fails', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('*/api/news', () =>
+        HttpResponse.json(
+          { error: { code: 'INTERNAL', message: 'boom' } },
+          { status: 500 },
+        ),
+      ),
+    )
+
+    render(
+      <Provider store={makeTestStore()}>
+        <FeedSection />
+      </Provider>,
+    )
+
+    // Content from the healthy sources still renders next to the warning.
+    await screen.findByText('Signal Horizon')
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/may be incomplete/i)
+
+    // Retry recovers once news comes back.
+    server.use(...feedHandlers(requests))
+    await user.click(screen.getByRole('button', { name: /try again/i }))
+    await screen.findByText('Tech story one')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
 })

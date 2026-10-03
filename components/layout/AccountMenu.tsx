@@ -114,11 +114,11 @@ export function AccountMenu() {
             </Link>
             <button type="button" role="menuitem" aria-disabled="true" className={cx(menuItemClass, 'text-ink-soft')}>
               Profile
-              <span className="text-xs text-ink-soft/80">soon</span>
+              <span className="text-xs text-ink-soft">soon</span>
             </button>
             <button type="button" role="menuitem" aria-disabled="true" className={cx(menuItemClass, 'text-ink-soft')}>
               Sign out
-              <span className="text-xs text-ink-soft/80">soon</span>
+              <span className="text-xs text-ink-soft">soon</span>
             </button>
           </motion.div>
         )}

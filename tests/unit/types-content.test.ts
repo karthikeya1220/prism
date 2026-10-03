@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CATEGORIES,
   isCategory,
+  isContentItem,
   isMovieItem,
   isNewsItem,
   isSocialItem,
@@ -49,5 +50,19 @@ describe('types/content', () => {
     expect(items.filter(isNewsItem).map((i) => i.id)).toEqual(['news:1'])
     expect(items.filter(isMovieItem).map((i) => i.id)).toEqual(['movie:1'])
     expect(items.filter(isSocialItem).map((i) => i.author.handle)).toEqual(['a'])
+  })
+
+  it('accepts only http(s) links — javascript:/data: URLs are rejected', () => {
+    const base: NewsItem = {
+      id: 'news:guard', type: 'news', title: 't', description: '',
+      imageUrl: null, url: 'https://example.com/a', source: 's',
+      category: 'technology', publishedAt: '2026-10-01T00:00:00Z', author: null,
+    }
+
+    expect(isContentItem(base)).toBe(true)
+    expect(isContentItem({ ...base, url: 'http://example.com/a' })).toBe(true)
+    expect(isContentItem({ ...base, url: 'javascript:alert(1)' })).toBe(false)
+    expect(isContentItem({ ...base, url: 'data:text/html,<script>' })).toBe(false)
+    expect(isContentItem({ ...base, imageUrl: 'javascript:alert(1)' })).toBe(false)
   })
 })

@@ -24,7 +24,7 @@ export function ErrorState({
     >
       <span
         aria-hidden="true"
-        className="grid h-11 w-11 place-items-center rounded-full bg-rose-500/10 text-rose-500"
+        className="grid h-11 w-11 place-items-center rounded-full bg-danger/10 text-danger"
       >
         <CloudOff size={20} />
       </span>

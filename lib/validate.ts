@@ -17,8 +17,10 @@ export class ValidationError extends Error {
 
 /** Shared page size across all content endpoints. */
 export const PAGE_SIZE = 12
-const MAX_PAGE = 10
+export const MAX_PAGE = 10
 const MAX_QUERY_LENGTH = 80
+const MAX_HASHTAGS = 10
+const MAX_HASHTAG_LENGTH = 40
 
 /** Parse `page` (1-based). Defaults to 1; clamps to [1, MAX_PAGE]. */
 export function parsePage(value: string | null): number {
@@ -42,13 +44,22 @@ export function parseCategories(value: string | null): Category[] {
   return categories.length > 0 ? categories : ['general']
 }
 
-/** Parse a comma-separated hashtag list (without '#'). Returns [] when absent. */
+/** Parse a comma-separated hashtag list (without '#'). Returns [] when absent.
+ * Rejects oversized input (too many tags, or a single runaway tag) with
+ * BAD_REQUEST so a crafted `?hashtag=` cannot fan out unbounded matching. */
 export function parseHashtags(value: string | null): string[] {
   if (value === null || value.trim() === '') return []
-  return value
+  const tags = value
     .split(',')
     .map((h) => h.trim().replace(/^#/, '').toLowerCase())
     .filter(Boolean)
+  if (tags.length > MAX_HASHTAGS) {
+    throw new ValidationError(`Too many hashtags (max ${MAX_HASHTAGS})`)
+  }
+  if (tags.some((tag) => tag.length > MAX_HASHTAG_LENGTH)) {
+    throw new ValidationError(`Hashtag too long (max ${MAX_HASHTAG_LENGTH} chars)`)
+  }
+  return tags
 }
 
 /** Parse the free-text search query; trims and caps length. '' when absent. */

@@ -91,7 +91,7 @@ export function SettingsPanel() {
         <button
           type="button"
           onClick={() => dispatch(resetPreferences())}
-          className="mt-3 rounded-control border border-rose-500/40 px-4 py-2 text-sm font-medium text-rose-500 transition-colors hover:bg-rose-500/10"
+          className="mt-3 rounded-control border border-danger/40 px-4 py-2 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
         >
           Reset to defaults
         </button>

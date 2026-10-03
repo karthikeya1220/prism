@@ -24,7 +24,7 @@ export function FavoriteButton({ title, pressed, onToggle }: FavoriteButtonProps
       aria-label={pressed ? `Remove ${title} from favorites` : `Add ${title} to favorites`}
       className={cx(
         'grid h-9 w-9 shrink-0 place-items-center rounded-control transition-colors hover:bg-line/60',
-        pressed ? 'text-rose-500' : 'text-ink-soft hover:text-ink',
+        pressed ? 'text-danger' : 'text-ink-soft hover:text-ink',
       )}
     >
       <Heart size={18} fill={pressed ? 'currentColor' : 'none'} aria-hidden="true" />

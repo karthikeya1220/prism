@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import reducer, {
+  MAX_FAVORITES,
   addFavorite,
   clearFavorites,
   hydrateFavorites,
@@ -69,5 +70,29 @@ describe('favoritesSlice', () => {
 
     const persisted = { byId: { 'movie:1': movie }, ids: ['movie:1'] }
     expect(reducer(initial, hydrateFavorites(persisted))).toEqual(persisted)
+  })
+
+  it('refuses new favorites at the cap while updates still work', () => {
+    let state = initial
+    for (let i = 0; i < MAX_FAVORITES; i += 1) {
+      state = reducer(state, addFavorite({ ...news, id: `news:${i}` }))
+    }
+    expect(state.ids).toHaveLength(MAX_FAVORITES)
+
+    state = reducer(state, addFavorite({ ...news, id: 'news:overflow' }))
+    expect(state.ids).toHaveLength(MAX_FAVORITES)
+    expect(state.byId['news:overflow']).toBeUndefined()
+
+    state = reducer(state, addFavorite({ ...news, id: 'news:0', title: 'Refreshed' }))
+    expect(state.byId['news:0'].title).toBe('Refreshed')
+    expect(state.ids).toHaveLength(MAX_FAVORITES)
+  })
+
+  it('caps oversized rehydrated payloads', () => {
+    const ids = Array.from({ length: MAX_FAVORITES + 10 }, (_, i) => `n${i}`)
+    const byId = Object.fromEntries(ids.map((id) => [id, { ...news, id }]))
+    const state = reducer(initial, hydrateFavorites({ byId, ids }))
+    expect(state.ids).toHaveLength(MAX_FAVORITES)
+    expect(Object.keys(state.byId)).toHaveLength(MAX_FAVORITES)
   })
 })

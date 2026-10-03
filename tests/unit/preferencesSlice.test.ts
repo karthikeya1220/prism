@@ -59,7 +59,7 @@ describe('preferencesSlice', () => {
       onboarded: false,
     }
     const state = reducer(initial, hydratePreferences(persisted))
-    expect(state).toEqual(persisted)
+    expect(state).toEqual({ ...persisted, hydrated: false })
   })
 
   it('never empties the category list', () => {

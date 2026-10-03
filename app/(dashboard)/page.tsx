@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import FeedSection from '@/features/feed/FeedSection'
-import OnboardingDialog from '@/features/preferences/OnboardingDialog'
 
 export const metadata: Metadata = { title: 'Feed — Prism' }
 
@@ -24,7 +23,6 @@ export default function FeedPage() {
         </h2>
         <FeedSection />
       </section>
-      <OnboardingDialog />
     </div>
   )
 }

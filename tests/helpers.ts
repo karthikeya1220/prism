@@ -14,6 +14,7 @@ import type {
 import { makeStore, type AppStore } from '@/store'
 import {
   hydratePreferences,
+  markHydrated,
   type PreferencesState,
 } from '@/features/preferences/preferencesSlice'
 
@@ -31,6 +32,8 @@ export function makeTestStore(
       ...preferences,
     }),
   )
+  // Tests skip the Providers mount effect — release hydrated-gated UI here.
+  store.dispatch(markHydrated())
   return store
 }
 

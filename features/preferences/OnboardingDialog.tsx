@@ -8,24 +8,30 @@ import { markOnboarded } from './preferencesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
 /**
- * First-run onboarding prompt (M5): a modal dialog over the feed asking the
- * user to pick their topics. Focus moves into the dialog, Tab cycles inside
- * it, and Escape / "Skip for now" / "Start reading" all mark onboarding
- * complete (persisted) so the prompt never nags again. Motion respects
- * prefers-reduced-motion.
+ * First-run onboarding prompt (M5): a modal dialog asking the user to pick
+ * their topics, mounted once in the dashboard layout so it guards every
+ * route. Nothing renders until rehydration completes (`hydrated`) —
+ * returning users never see a flash of the prompt. Focus moves into the
+ * dialog, Tab cycles inside it, Escape / "Skip for now" / "Start reading"
+ * all mark onboarding complete (persisted), and focus returns to whatever
+ * was focused before it opened. Motion respects prefers-reduced-motion.
  */
 export function OnboardingDialog() {
+  const hydrated = useAppSelector((state) => state.preferences.hydrated)
   const onboarded = useAppSelector((state) => state.preferences.onboarded)
   const dispatch = useAppDispatch()
   const panelRef = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
+  const show = hydrated && !onboarded
 
   const dismiss = useCallback(() => {
     dispatch(markOnboarded())
   }, [dispatch])
 
   useEffect(() => {
-    if (onboarded) return
+    if (!show) return
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
     panelRef.current?.focus()
     document.body.style.overflow = 'hidden'
 
@@ -59,12 +65,14 @@ export function OnboardingDialog() {
     return () => {
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = ''
+      // Restore focus to whatever had it before the dialog opened.
+      if (previouslyFocused?.isConnected) previouslyFocused.focus()
     }
-  }, [onboarded, dismiss])
+  }, [show, dismiss])
 
   return (
     <AnimatePresence>
-      {!onboarded && (
+      {show && (
         <motion.div
           key="onboarding-backdrop"
           initial={reduce ? false : { opacity: 0 }}

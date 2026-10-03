@@ -35,6 +35,10 @@
   --accent-solid: #4a4fe0;
   --on-accent: #ffffff;
 
+  /* Danger text/borders — tuned for WCAG AA (≥4.5:1) on canvas and surface.
+     Plain rose-500 only reaches ~3.7:1 in light mode, so light uses rose-700. */
+  --danger: #be123c;
+
   /* Fixed "instrument frame" sidebar — ink-dark in both themes */
   --sidebar: #141826;
   --sidebar-ink: #e7eaf4;
@@ -68,6 +72,8 @@
   --accent-solid: #5a5de8;
   --on-accent: #ffffff;
 
+  --danger: #f43f5e;
+
   --sidebar: #0b0e16;
   --sidebar-ink: #e7eaf4;
   --sidebar-ink-soft: #8f97b3;
@@ -87,6 +93,7 @@
   --color-accent: var(--accent);
   --color-accent-solid: var(--accent-solid);
   --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
   --color-sidebar: var(--sidebar);
   --color-sidebar-ink: var(--sidebar-ink);
   --color-sidebar-ink-soft: var(--sidebar-ink-soft);

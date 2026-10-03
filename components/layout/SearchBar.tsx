@@ -17,48 +17,49 @@ export const MIN_QUERY_LENGTH = 2
  * after a 400 ms debounce (useDebounce) and at least MIN_QUERY_LENGTH
  * characters. `/` focuses the input from anywhere outside a text field,
  * Escape clears it, and Enter flushes the debounce for an immediate search.
- * Every sync is a `history.replaceState`-style URL update (router.replace)
- * so each keystroke pause never piles up back-button entries.
+ * URL→input sync happens render-side (adjust-on-prop-change) so external
+ * navigations — back/forward, suggestion links — are followed without a
+ * remount: typing never loses focus or caret position. Every sync is a
+ * `history.replaceState`-style URL update (router.replace) so each keystroke
+ * pause never piles up back-button entries.
  */
 export function SearchBar({ className }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlQuery = searchParams.get('q') ?? ''
 
-  // `key` remounts the inner (stateful) bar whenever the URL query changes
-  // from outside — back/forward, clear-via-URL, suggestion links — so the
-  // input follows the URL without a setState-in-effect (React 19 lint rule).
-  // Typing only mutates local state; the debounce effect stays inside.
-  return (
-    <KeyedSearchBar key={urlQuery} initialQuery={urlQuery} router={router} className={className} />
-  )
-}
-
-function KeyedSearchBar({
-  initialQuery,
-  router,
-  className,
-}: {
-  initialQuery: string
-  router: ReturnType<typeof useRouter>
-  className?: string
-}) {
-  const [query, setQuery] = useState(initialQuery)
+  const [query, setQuery] = useState(urlQuery)
+  /** Last URL value this bar has reconciled with (adjust-on-change guard). */
+  const [syncedUrlQuery, setSyncedUrlQuery] = useState(urlQuery)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounced = useDebounce(query, 400)
 
+  // React's "adjusting state when a prop changes" pattern: follow the URL
+  // only when it changed from outside — a change that matches the local
+  // draft (live query or still-settling debounce) is our own sync landing,
+  // so it must not clobber in-flight typing. The input never remounts, so
+  // focus and caret position survive every URL update.
+  if (syncedUrlQuery !== urlQuery) {
+    setSyncedUrlQuery(urlQuery)
+    const matchesLocal = urlQuery === query.trim() || urlQuery === debounced.trim()
+    if (!matchesLocal) setQuery(urlQuery)
+  }
+
   // Debounced sync: only act on settled, trimmed, long-enough queries.
+  // `debounced !== query` means the value is stale (e.g. the query was just
+  // adopted from the URL, or cleared) — let it catch up, never re-push.
   useEffect(() => {
     const trimmed = debounced.trim()
     if (trimmed.length < MIN_QUERY_LENGTH) return
-    if (trimmed === initialQuery.trim()) return
+    if (trimmed === urlQuery.trim()) return
+    if (trimmed !== query.trim()) return
     router.replace(`/search?q=${encodeURIComponent(trimmed)}`)
-  }, [debounced, router, initialQuery])
+  }, [debounced, query, router, urlQuery])
 
   const clear = () => {
     setQuery('')
     inputRef.current?.focus()
-    if (initialQuery) router.replace('/search')
+    if (urlQuery) router.replace('/search')
   }
 
   // Flush the pending debounce on Enter (or submit) for an instant search.
@@ -66,7 +67,7 @@ function KeyedSearchBar({
     event.preventDefault()
     const trimmed = query.trim()
     if (trimmed.length < MIN_QUERY_LENGTH) return
-    if (trimmed === initialQuery.trim()) return
+    if (trimmed === urlQuery.trim()) return
     router.replace(`/search?q=${encodeURIComponent(trimmed)}`)
   }
 
@@ -118,7 +119,7 @@ function KeyedSearchBar({
           placeholder="Search news, movies, posts…"
           autoComplete="off"
           aria-describedby="global-search-hint"
-          className="h-10 w-full rounded-control border border-line bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-ink-soft/80"
+          className="h-10 w-full rounded-control border border-line bg-surface pl-9 pr-9 text-sm text-ink placeholder:text-ink-soft"
         />
         {query && (
           <button

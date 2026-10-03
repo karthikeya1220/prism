@@ -4,6 +4,7 @@
  */
 import type { ContentPage, MovieItem } from '@/types'
 import { hashId } from '../hash'
+import { MAX_PAGE } from '../validate'
 import { UpstreamError } from '../upstream'
 
 const TMDB_BASE = 'https://api.themoviedb.org/3'
@@ -129,7 +130,11 @@ async function fetchList(
     page,
     pageSize,
     totalResults: data.total_results ?? items.length,
-    hasMore: Boolean(data.total_results) && page * pageSize < (data.total_results ?? 0),
+    // Clamped at MAX_PAGE (route rejects higher pages) so the sentinel stops.
+    hasMore:
+      page < MAX_PAGE &&
+      Boolean(data.total_results) &&
+      page * pageSize < (data.total_results ?? 0),
     source: 'live',
   }
 }

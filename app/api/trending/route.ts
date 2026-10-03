@@ -15,6 +15,7 @@ import type { Category, ContentItem, ContentPage, ContentSource, MovieItem, News
 import { fetchNews } from '@/lib/apis/news'
 import { fetchTrendingMovies } from '@/lib/apis/movies'
 import { fetchSocial } from '@/lib/apis/social'
+import { cacheKey, getCache, setCache } from '@/lib/cache'
 import { jsonPage, withErrors } from '@/lib/response'
 import {
   PAGE_SIZE,
@@ -28,6 +29,14 @@ import { buildMockMoviesPage } from '@/mocks/moviesPage'
 
 /** Items per section — one full screen of trending content per type. */
 const PER_TYPE = PAGE_SIZE
+
+/**
+ * Upstream slices are cached with the same TTLs as /api/news (10 min) and
+ * /api/movies (60 min) — trending fires on every visit and tab switch and
+ * must not burn the NewsAPI free tier (~100 req/day).
+ */
+const NEWS_TTL_MS = 10 * 60_000
+const MOVIES_TTL_MS = 60 * 60_000
 
 /** Engagement score for social posts (PLAN.md §5). */
 function engagement(post: SocialItem): number {
@@ -66,9 +75,27 @@ function trendingPage<T extends ContentItem>(
   }
 }
 
+/** Shared cached fetch of one upstream-backed trending slice. */
+async function cachedSlice<T extends ContentItem>(
+  key: string,
+  ttlMs: number,
+  produce: () => Promise<ContentPage<T>>,
+): Promise<ContentPage<T>> {
+  const hit = getCache<ContentPage<T>>(key)
+  if (hit) return hit
+  // Failures resolve to the mock fallback inside produce(); caching that too
+  // keeps a broken upstream from being hammered while it recovers.
+  const result = await produce()
+  setCache(key, result, ttlMs)
+  return result
+}
+
 async function trendingNews(categories: Category[], requested: number): Promise<ContentPage<NewsItem>> {
-  const result = await fetchNews({ categories, page: 1, pageSize: PER_TYPE }).catch(
-    () => buildMockNewsPage(categories, 1, '', PER_TYPE),
+  const key = cacheKey('trending-news', { cats: [...categories].sort().join(','), size: PER_TYPE })
+  const result = await cachedSlice(key, NEWS_TTL_MS, () =>
+    fetchNews({ categories, page: 1, pageSize: PER_TYPE }).catch(
+      () => buildMockNewsPage(categories, 1, '', PER_TYPE),
+    ),
   )
   const items = [...result.items]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
@@ -77,8 +104,12 @@ async function trendingNews(categories: Category[], requested: number): Promise<
 }
 
 async function trendingMovies(categories: Category[], requested: number): Promise<ContentPage<MovieItem>> {
-  const result = await fetchTrendingMovies({ categories, page: 1, pageSize: PER_TYPE })
-    .catch(() => buildMockMoviesPage(categories, 1, '', PER_TYPE))
+  const key = cacheKey('trending-movies', { cats: [...categories].sort().join(','), size: PER_TYPE })
+  const result = await cachedSlice(key, MOVIES_TTL_MS, () =>
+    fetchTrendingMovies({ categories, page: 1, pageSize: PER_TYPE }).catch(() =>
+      buildMockMoviesPage(categories, 1, '', PER_TYPE),
+    ),
+  )
   const wanted = categories.includes('general') ? null : categories
   const items = result.items
     .filter((movie) => !wanted || wanted.includes(movie.category))

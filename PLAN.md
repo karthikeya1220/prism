@@ -401,10 +401,27 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
   typing can never render stale results (proven by a held-response test).
   Also fixed: `/api/news` now honors `q` (local filter after NewsAPI
   top-headlines, truthful totals) with the cache key including `q`, and the
-  mock news fallback filters by `q`. Debounce is 400 ms per task spec (PLAN
+  mock news fallback filters by `q`.   Debounce is 400 ms per task spec (PLAN
   said 300 ms; the mechanism is identical). Verified: `lint`, `typecheck`,
   115 unit/integration tests (SearchBar 11, search integration 7,
   useDebounce 4).
+- **Post-audit batch (2026-10-03, high + security mediums).** `/api/news`
+  fan-out honors every selected category (parallel per-category fetch,
+  merge/dedupe, http(s)-only URLs) with `MAX_PAGE` hasMore clamps on all
+  three adapters; `/api/trending` TTL-caches (10 min news / 60 min movies);
+  the shared cache is bounded at 250 entries with FIFO eviction +
+  evict-on-read. The feed waits for preference rehydration (no pre-hydration
+  fetch, no dialog flash) and shows a partial-failure `role="alert"` banner
+  with retry while scroll stays gated by `!anyError`. Onboarding mounts in
+  the dashboard layout (every route) and restores prior focus on dismiss;
+  SearchBar adopts external URL changes via render-time adjust instead of a
+  `key` remount (focus/caret survive typing syncs). `isContentItem` rejects
+  non-http(s) `url`/`imageUrl`; `--color-danger` replaces raw rose-500 for AA
+  contrast; `.gitignore` covers `.env*` (`.env.example` still tracked);
+  hashtags capped (10 × 40 chars → BAD_REQUEST), favorites capped at 100,
+  cache at 250. Verified: `lint`, `typecheck`, 129 tests (new: cache,
+  useInfiniteScroll, feed card types + guard/cap/banner cases), Playwright
+  smoke.
 - **M8 — Drag & drop.** dnd-kit sortable feed, KeyboardSensor, `feedOrder`
   persistence, `aria-live` announcements, `prefers-reduced-motion` disables animations.
   *AC:* reorder by mouse **and keyboard**, persists after reload; tests. `feat:`

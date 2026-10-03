@@ -17,6 +17,13 @@ const initialState: FavoritesState = {
   ids: [],
 }
 
+/**
+ * Hard cap: favorites persist to localStorage as full snapshots, so bound
+ * the payload. At the cap, new adds are refused (the heart simply stays
+ * off) and updates to existing favorites still work.
+ */
+export const MAX_FAVORITES = 100
+
 const favoritesSlice = createSlice({
   name: 'favorites',
   initialState,
@@ -24,7 +31,9 @@ const favoritesSlice = createSlice({
     /** Add (or update) a favorite. Idempotent on id — no duplicates. */
     addFavorite(state, action: PayloadAction<ContentItem>) {
       const item = action.payload
-      if (!state.ids.includes(item.id)) state.ids.push(item.id)
+      const exists = item.id in state.byId
+      if (!exists && state.ids.length >= MAX_FAVORITES) return
+      if (!exists) state.ids.push(item.id)
       state.byId[item.id] = item
     },
     removeFavorite(state, action: PayloadAction<string>) {
@@ -34,10 +43,11 @@ const favoritesSlice = createSlice({
     /** Toggle: returns the item's new favorite status. */
     toggleFavorite(state, action: PayloadAction<ContentItem>) {
       const item = action.payload
-      if (state.ids.includes(item.id)) {
+      if (item.id in state.byId) {
         delete state.byId[item.id]
         state.ids = state.ids.filter((id) => id !== item.id)
       } else {
+        if (state.ids.length >= MAX_FAVORITES) return
         state.ids.push(item.id)
         state.byId[item.id] = item
       }
@@ -45,9 +55,17 @@ const favoritesSlice = createSlice({
     clearFavorites() {
       return initialState
     },
-    /** Replace all state (used by persistence rehydration). */
+    /** Replace state from storage (capped so a corrupt payload stays bounded). */
     hydrateFavorites(state, action: PayloadAction<FavoritesState>) {
-      return action.payload
+      const payload = action.payload
+      if (payload.ids.length <= MAX_FAVORITES) return payload
+      const ids = payload.ids.slice(0, MAX_FAVORITES)
+      const byId: Record<string, ContentItem> = {}
+      for (const id of ids) {
+        const item = payload.byId[id]
+        if (item) byId[id] = item
+      }
+      return { byId, ids }
     },
   },
 })

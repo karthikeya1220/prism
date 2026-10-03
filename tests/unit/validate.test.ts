@@ -63,6 +63,15 @@ describe('parseHashtags', () => {
     expect(parseHashtags(' , ')).toEqual([])
     expect(parseHashtags('#AI, Finance')).toEqual(['ai', 'finance'])
   })
+
+  it('rejects oversized hashtag input with BAD_REQUEST', () => {
+    const many = Array.from({ length: 11 }, (_, i) => `t${i}`).join(',')
+    const tooMany = catchError(() => parseHashtags(many))
+    expect(tooMany).toBeInstanceOf(ValidationError)
+
+    const runaway = catchError(() => parseHashtags('a'.repeat(41)))
+    expect(runaway).toBeInstanceOf(ValidationError)
+  })
 })
 
 describe('parseQuery', () => {

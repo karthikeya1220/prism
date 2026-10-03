@@ -82,6 +82,9 @@ export function isSocialItem(item: ContentItem): item is SocialItem {
   return item.type === 'social'
 }
 
+/** Only web schemes may leave the app — blocks `javascript:`, `data:`, etc. */
+const SAFE_URL_SCHEME = /^https?:\/\//i
+
 function isBaseContentItem(value: unknown): value is BaseContentItem {
   if (!value || typeof value !== 'object') return false
   const v = value as Partial<BaseContentItem>
@@ -90,9 +93,11 @@ function isBaseContentItem(value: unknown): value is BaseContentItem {
     typeof v.title === 'string' &&
     typeof v.description === 'string' &&
     typeof v.url === 'string' &&
+    SAFE_URL_SCHEME.test(v.url) &&
     typeof v.source === 'string' &&
     typeof v.publishedAt === 'string' &&
-    (v.imageUrl === null || typeof v.imageUrl === 'string') &&
+    (v.imageUrl === null ||
+      (typeof v.imageUrl === 'string' && SAFE_URL_SCHEME.test(v.imageUrl))) &&
     typeof v.category === 'string' &&
     isCategory(v.category)
   )

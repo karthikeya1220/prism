@@ -18,13 +18,24 @@ export interface PreferencesState {
   language: 'en' | 'de'
   /** First-run onboarding has been completed (chosen topics or skipped). */
   onboarded: boolean
+  /**
+   * True once post-mount rehydration has run. Until then the defaults on
+   * screen are provisional — gated UI (onboarding dialog, feed queries) must
+   * wait so returning users see no flash and no duplicate first fetch.
+   * Runtime-only: never written to storage.
+   */
+  hydrated: boolean
 }
+
+/** The persisted subset — `hydrated` lives only in memory. */
+export type PersistedPreferences = Omit<PreferencesState, 'hydrated'>
 
 const initialState: PreferencesState = {
   categories: DEFAULT_CATEGORIES,
   darkMode: false,
   language: 'en',
   onboarded: false,
+  hydrated: false,
 }
 
 const preferencesSlice = createSlice({
@@ -54,6 +65,10 @@ const preferencesSlice = createSlice({
     markOnboarded(state) {
       state.onboarded = true
     },
+    /** Post-mount rehydration pass finished (even when storage was empty). */
+    markHydrated(state) {
+      state.hydrated = true
+    },
     /**
      * Restore factory defaults. The onboarding flag is intentionally kept —
      * resetting topics should not re-trigger the first-run prompt.
@@ -63,9 +78,9 @@ const preferencesSlice = createSlice({
       state.darkMode = false
       state.language = 'en'
     },
-    /** Replace all state (used by persistence rehydration). */
-    hydratePreferences(state, action: PayloadAction<PreferencesState>) {
-      return action.payload
+    /** Replace persisted fields (used by persistence rehydration). */
+    hydratePreferences(state, action: PayloadAction<PersistedPreferences>) {
+      return { ...action.payload, hydrated: state.hydrated }
     },
   },
 })
@@ -75,6 +90,7 @@ export const {
   setDarkMode,
   setLanguage,
   markOnboarded,
+  markHydrated,
   resetPreferences,
   hydratePreferences,
 } = preferencesSlice.actions

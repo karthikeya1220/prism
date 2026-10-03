@@ -68,7 +68,7 @@ export function PreferencesForm() {
         className="mt-3 text-xs"
       >
         {blocked ? (
-          <span className="text-rose-500">
+          <span className="text-danger">
             Keep at least one topic selected — Prism always needs something to show you.
           </span>
         ) : (

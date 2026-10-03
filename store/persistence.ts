@@ -14,11 +14,13 @@ import { createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit'
 import {
   DEFAULT_CATEGORIES,
   hydratePreferences,
+  markHydrated,
   markOnboarded,
   resetPreferences,
   setDarkMode,
   setLanguage,
   toggleCategory,
+  type PersistedPreferences,
   type PreferencesState,
 } from '@/features/preferences/preferencesSlice'
 import {
@@ -44,7 +46,7 @@ const MAX_PERSISTED_IDS = 200
 
 /** Validated slice payloads recovered from storage (any slice may be absent). */
 export interface PersistedState {
-  preferences?: PreferencesState
+  preferences?: PersistedPreferences
   favorites?: FavoritesState
   layout?: LayoutState
 }
@@ -72,7 +74,7 @@ function createWriter() {
   }
 }
 
-function sanitizePreferences(value: unknown): PreferencesState | null {
+function sanitizePreferences(value: unknown): PersistedPreferences | null {
   if (!value || typeof value !== 'object') return null
   const v = value as Partial<PreferencesState>
   if (!Array.isArray(v.categories)) return null
@@ -166,13 +168,17 @@ export function loadPersistedState(): PersistedState | undefined {
  * Apply persisted slices to a freshly created store. Call once on mount from
  * Providers — never during render, so SSR and hydration stay in sync.
  * Hydrate actions are excluded from the write whitelist (they ARE the data).
+ * Always finishes by marking the store hydrated — even with empty storage —
+ * so gated UI (onboarding, feed queries) releases exactly once.
  */
 export function hydrateFromStorage(dispatch: AppDispatch): PersistedState | undefined {
   const persisted = loadPersistedState()
-  if (!persisted) return undefined
-  if (persisted.preferences) dispatch(hydratePreferences(persisted.preferences))
-  if (persisted.favorites) dispatch(hydrateFavorites(persisted.favorites))
-  if (persisted.layout) dispatch(hydrateLayout(persisted.layout))
+  if (persisted) {
+    if (persisted.preferences) dispatch(hydratePreferences(persisted.preferences))
+    if (persisted.favorites) dispatch(hydrateFavorites(persisted.favorites))
+    if (persisted.layout) dispatch(hydrateLayout(persisted.layout))
+  }
+  dispatch(markHydrated())
   return persisted
 }
 
