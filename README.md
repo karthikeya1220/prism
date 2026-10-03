@@ -91,6 +91,20 @@ server-rendered landmark names (e.g. the profile section's `aria-label`) stay
 English; API-passthrough error messages from route handlers stay English;
 external data labels (TMDB genre names, news source names) are not translated.
 
+## Realtime Feed (SSE)
+
+The dashboard feed subscribes to `GET /api/social/stream`, a server-sent
+events endpoint that emits one deterministic mock social post immediately on
+connect and then every **15 s** (`?interval=` clamped 50–60 000 ms exists for
+tests), with `: ping` heartbeats to keep the connection warm. Arrivals queue
+up behind an **"N new posts"** pill — a polite `aria-live` region above the
+grid; clicking it reveals the posts at the top of the feed (deduped by id)
+and the pill animates out unless you prefer reduced motion.
+
+Implementation: `app/api/social/stream/route.ts` → `hooks/useSocialStream.ts`
+→ `features/feed/realtimeSlice.ts` (`pending` → `live`, ephemeral — never
+persisted) merged into the social stream by `FeedSection`.
+
 ## Project Structure
 
 See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,feed}`,
@@ -100,4 +114,5 @@ See rule 3 in [`CLAUDE.md`](./CLAUDE.md): `/app`, `/components/{ui,cards,layout,
 ## Status
 
 Milestone tracking lives in [`PLAN.md`](./PLAN.md). Current: **M8 — drag & drop**
-✅ plus bonus **M11 — mock auth** ✅ and **M13 — i18n (en + hi)** ✅.
+✅ plus bonuses **M11 — mock auth** ✅, **M12 — realtime SSE feed** ✅, and
+**M13 — i18n (en + hi)** ✅.

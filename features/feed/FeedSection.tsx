@@ -6,12 +6,15 @@ import SortableFeedGrid from '@/components/feed/SortableFeedGrid'
 import CardSkeleton from '@/components/cards/CardSkeleton'
 import ErrorState from '@/components/feed/ErrorState'
 import EmptyState from '@/components/ui/EmptyState'
+import { NewPostsPill } from '@/components/feed/NewPostsPill'
 import { buildFeed } from '@/features/feed/buildFeed'
 import { useFeedOrder } from '@/features/feed/useFeedOrder'
 import { useInfiniteScroll } from '@/features/feed/useInfiniteScroll'
 import { useGetMoviesQuery, useGetNewsQuery, useGetSocialQuery } from '@/features/feed/contentApi'
+import { selectLive } from '@/features/feed/realtimeSlice'
 import { toggleFavorite } from '@/features/favorites/favoritesSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { useSocialStream } from '@/hooks/useSocialStream'
 import type { ContentItem } from '@/types'
 import { useTranslation } from '@/lib/i18n'
 
@@ -42,15 +45,24 @@ export function FeedSection() {
   const movies = useGetMoviesQuery({ categories, page }, { skip: !hydrated })
   const social = useGetSocialQuery({ page }, { skip: !hydrated })
 
+  // SSE live posts: merge revealed items in front of the social page and
+  // de-dupe by id (the API page may eventually contain the same post).
+  useSocialStream(hydrated)
+  const live = useAppSelector(selectLive)
+  const liveIds = useMemo(() => new Set(live.map((post) => post.id)), [live])
+
   const items = useMemo(
     () =>
       buildFeed({
         news: news.data?.items ?? [],
         movies: movies.data?.items ?? [],
-        social: social.data?.items ?? [],
+        social: [
+          ...live,
+          ...(social.data?.items ?? []).filter((post) => !liveIds.has(post.id)),
+        ],
         categories,
       }),
-    [news.data, movies.data, social.data, categories],
+    [news.data, movies.data, social.data, categories, live, liveIds],
   )
   const { orderedItems, isCustomized, reorder, reset } = useFeedOrder(items)
 
@@ -89,6 +101,7 @@ export function FeedSection() {
 
   return (
     <div className="space-y-4">
+      <NewPostsPill />
       {!hydrated || (firstLoad && items.length === 0) ? (
         <div
           role="status"

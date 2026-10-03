@@ -10,6 +10,7 @@ import { contentApi } from '@/features/feed/contentApi'
 import preferencesReducer from '@/features/preferences/preferencesSlice'
 import favoritesReducer from '@/features/favorites/favoritesSlice'
 import layoutReducer from '@/features/layout/layoutSlice'
+import realtimeReducer from '@/features/feed/realtimeSlice'
 import { createPersistenceMiddleware } from './persistence'
 
 export function makeStore() {
@@ -19,6 +20,7 @@ export function makeStore() {
       preferences: preferencesReducer,
       favorites: favoritesReducer,
       layout: layoutReducer,
+      realtime: realtimeReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(

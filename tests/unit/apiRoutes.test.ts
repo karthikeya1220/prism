@@ -9,6 +9,7 @@ import { GET as getNews } from '@/app/api/news/route'
 import { GET as getMovies } from '@/app/api/movies/route'
 import { GET as getSocial } from '@/app/api/social/route'
 import { GET as getTrending } from '@/app/api/trending/route'
+import { GET as getStream, intervalMsFrom } from '@/app/api/social/stream/route'
 import type { ApiErrorBody, ContentItem, ContentPage, MovieItem, NewsItem, SocialItem } from '@/types'
 
 function req(path: string): NextRequest {
@@ -144,4 +145,61 @@ describe('GET /api/trending', () => {
   it('rejects an unknown type with 400 BAD_REQUEST', async () => {
     await expectBadRequest(await getTrending(req('/api/trending?type=podcast')))
   })
+})
+
+describe('GET /api/social/stream', () => {
+  it('clamps interval query values and defaults to 15 s', () => {
+    expect(intervalMsFrom(new URL('http://x/api/social/stream'))).toBe(15_000)
+    expect(intervalMsFrom(new URL('http://x/s?interval=abc'))).toBe(15_000)
+    expect(intervalMsFrom(new URL('http://x/s?interval=0'))).toBe(50)
+    expect(intervalMsFrom(new URL('http://x/s?interval=999999'))).toBe(60_000)
+    expect(intervalMsFrom(new URL('http://x/s?interval=2500'))).toBe(2_500)
+  })
+
+  it('streams post frames with a fast test interval', async () => {
+    const controller = new AbortController()
+    const response = await getStream(
+      new NextRequest('http://localhost:3000/api/social/stream?interval=50', {
+        signal: controller.signal,
+      }),
+    )
+    expect(response.headers.get('content-type')).toContain('text/event-stream')
+    expect(response.headers.get('cache-control')).toContain('no-cache')
+
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    const readUntilPost = async (): Promise<void> => {
+      // Two frames within ~150 ms of wall time; bail if the stream stalls.
+      const deadline = Date.now() + 2_000
+      while (!buffer.includes('event: post') && Date.now() < deadline) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+      }
+    }
+
+    try {
+      await readUntilPost()
+      expect(buffer).toContain('event: post')
+      expect(buffer).toContain('data: ')
+
+      const first = JSON.parse(
+        buffer.split('\n').find((line) => line.startsWith('data: '))!.slice(6),
+      ) as SocialItem
+      expect(first.type).toBe('social')
+      expect(first.id).toMatch(/^social:live:\d+-1$/)
+
+      buffer = ''
+      await readUntilPost()
+      const second = JSON.parse(
+        buffer.split('\n').find((line) => line.startsWith('data: '))!.slice(6),
+      ) as SocialItem
+      expect(second.id).toMatch(/^social:live:\d+-2$/)
+      expect(second.id).not.toBe(first.id)
+    } finally {
+      controller.abort()
+      await reader.cancel().catch(() => undefined)
+    }
+  }, 5_000)
 })

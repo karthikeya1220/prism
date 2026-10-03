@@ -12,8 +12,9 @@
 > M7 ✅ (debounced cross-type search, /search page, grouped results) ·
 > M8 ✅ (dnd-kit sortable feed — pointer/touch/keyboard, announcements,
 > layout slice persistence, Reset order) ·
-> M9–M13 pending (M9 partly: trending + favorites sections done; transitions
-> and final a11y pass remain) · M11 ✅ (NextAuth v5 Credentials + profile page)
+> M9 partly (trending + favorites sections done; transitions and final a11y
+> pass remain) · M11 ✅ (NextAuth v5 Credentials + profile page) ·
+> M12 ✅ (SSE live social feed + "N new posts" pill) · M13 ✅ (i18n en + hi)
 
 ---
 
@@ -471,6 +472,18 @@ Security → M3 route handlers, key secrecy, no secrets in repo (rule 1).
   indicator with `aria-live`; new posts animate in unless reduced motion.
   *AC:* posts appear without user action; no upstream API cost (mock only);
   tests cover the merge path. `feat:`
+  *Done 2026-10-03 (user directed ~15 s):* `app/api/social/stream/route.ts`
+  emits `event: post` frames immediately on connect then every 15 s (clamped
+  `?interval=` 50–60 000 ms test hook, `: ping` heartbeats, abort/cancel
+  cleanup, force-dynamic) over a deterministic `lib/live/social.ts` generator
+  (id `social:live:<ts>-<n>` — unique across reconnects); client
+  `hooks/useSocialStream.ts` (guards missing `EventSource`) →
+  `features/feed/realtimeSlice.ts` (`pending` → `consumeLive` → `live`,
+  dedupe by id, not persisted) → `FeedSection` merges `live` ahead of the
+  social page; `NewPostsPill` polite live region ("N new posts", en + hi)
+  with reduced-motion-aware entrance. Tests: `realtimeSlice` unit,
+  `realtimeFeed` integration (stubbed EventSource), stream route in
+  `apiRoutes` (fast `?interval=50`); lint/typecheck/194 tests/7 E2E green.
 - **M13 — i18n.** `react-i18next` + `i18next` (deps approved via bonus selection),
   `/lib/i18n` resources `en` + `de`, header LanguageSwitcher, persisted locale,
   full pass replacing hardcoded strings.
